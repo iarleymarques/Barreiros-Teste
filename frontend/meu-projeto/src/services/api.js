@@ -1,4 +1,16 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://distribuidorabarreirosbebidasltda.up.railway.app/api/v1';
+function sanitizeApiUrl(url) {
+  if (!url) return 'https://distribuidorabarreirosbebidasltda.up.railway.app/api/v1';
+  let clean = url.trim();
+  // Corrige caso tenha https://https:// ou http://https:// duplicado
+  clean = clean.replace(/^(https?:\/\/)+/i, 'https://');
+  // Normaliza o /api/v1 final sem barras duplas
+  clean = clean.replace(/\/+api\/v1\/?$/i, '/api/v1');
+  clean = clean.replace(/\/+$/, '');
+  return clean;
+}
+
+const rawApiUrl = import.meta.env.VITE_API_URL || 'https://distribuidorabarreirosbebidasltda.up.railway.app/api/v1';
+const API_BASE_URL = sanitizeApiUrl(rawApiUrl);
 
 // Gerenciamento seguro do Token JWT
 export function getAuthToken() {
