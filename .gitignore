@@ -1,0 +1,21 @@
+# Ambientes virtuais e dependências
+.venv/
+venv/
+node_modules/
+dist/
+build/
+
+# Caches do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+
+# Variáveis de ambiente com credenciais reais (manter apenas .env.example)
+.env
+backend/.env
+
+# Caches de IDE e SO
+.DS_Store
+Thumbs.db
+*.log
