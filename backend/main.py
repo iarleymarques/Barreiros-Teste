@@ -93,22 +93,24 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configuração segura de CORS para comunicação com o Frontend React
+# Configuração flexível e segura de CORS para comunicação com o Frontend
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 custom_origins = [o.strip() for o in env_origins.split(",") if o.strip()]
 ALLOWED_ORIGINS = list(set([
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "https://distribuidorairmaosbarreiros.up.railway.app"
 ] + custom_origins))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://.*\.up\.railway\.app",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "X-Requested-With"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Inclui os roteadores da API v1
