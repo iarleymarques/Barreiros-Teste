@@ -143,7 +143,7 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
           <strong className="font-extrabold uppercase tracking-wide text-zinc-950">
             {empresa}
           </strong>{' '}
-          a importância de <strong>R$ {totalFormatado} ({valorExtenso})</strong> referente ao pagamento de {textoReferente}.
+          a importância supra referente ao pagamento de {textoReferente}.
         </p>
 
         <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
