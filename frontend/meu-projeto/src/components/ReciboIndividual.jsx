@@ -1,273 +1,375 @@
 import React, { useState, useEffect } from 'react';
-import { emitirReciboApi } from '../services/api';
-import { 
-  FileText, 
-  Printer, 
-  ArrowLeft, 
-  Copy, 
-  Check, 
-  User, 
-  DollarSign, 
-  Calendar, 
-  Truck, 
-  CreditCard, 
-  Download,
-  Building2,
-  CheckCircle2,
-  Clock,
-  Plus,
-  Minus,
-  AlertCircle,
-  ShieldCheck,
+import { getDiaristasApi, emitirReciboApi } from '../services/api';
+import {
+  FileText,
+  Printer,
+  ArrowLeft,
+  Copy,
+  Check,
+  User,
+  Calendar,
   Receipt,
-  Save
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  CalendarDays,
+  CalendarRange,
+  CalendarCheck,
 } from 'lucide-react';
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function numeroPorExtenso(valor) {
   const v = parseFloat(valor) || 0;
   const inteiros = Math.floor(v);
-
   const unidades = ['', 'Um', 'Dois', 'Três', 'Quatro', 'Cinco', 'Seis', 'Sete', 'Oito', 'Nove'];
   const especiais = ['Dez', 'Onze', 'Doze', 'Treze', 'Quatorze', 'Quinze', 'Dezesseis', 'Dezessete', 'Dezoito', 'Dezenove'];
   const dezenas = ['', 'Dez', 'Vinte', 'Trinta', 'Quarenta', 'Cinquenta', 'Sessenta', 'Setenta', 'Oitenta', 'Noventa'];
   const centenas = ['', 'Cento', 'Duzentos', 'Trezentos', 'Quatrocentos', 'Quinhentos', 'Seiscentos', 'Setecentos', 'Oitocentos', 'Novecentos'];
-
   if (inteiros === 0) return 'Zero Reais';
   if (inteiros === 100) return 'Cem Reais';
-
   let extenso = '';
-
   if (inteiros >= 1000) {
     const mil = Math.floor(inteiros / 1000);
     const restoMil = inteiros % 1000;
     extenso += (mil === 1 ? 'Mil' : `${unidades[mil]} Mil`);
     if (restoMil > 0) extenso += ' e ';
   }
-
   const c = Math.floor((inteiros % 1000) / 100);
   const restoC = inteiros % 100;
-
-  if (c > 0) {
-    extenso += centenas[c];
-    if (restoC > 0) extenso += ' e ';
-  }
-
+  if (c > 0) { extenso += centenas[c]; if (restoC > 0) extenso += ' e '; }
   if (restoC >= 10 && restoC <= 19) {
     extenso += especiais[restoC - 10];
   } else if (restoC > 0) {
     const d = Math.floor(restoC / 10);
     const u = restoC % 10;
-    if (d > 0) {
-      extenso += dezenas[d];
-      if (u > 0) extenso += ' e ';
-    }
-    if (u > 0) {
-      extenso += unidades[u];
-    }
+    if (d > 0) { extenso += dezenas[d]; if (u > 0) extenso += ' e '; }
+    if (u > 0) extenso += unidades[u];
   }
-
-  extenso = extenso.trim() + (inteiros === 1 ? ' Real' : ' Reais');
-  return extenso;
+  return extenso.trim() + (inteiros === 1 ? ' Real' : ' Reais');
 }
 
 function getHojeISO() {
   return new Date().toISOString().split('T')[0];
 }
 
+function formatarDataBR(dataISO) {
+  if (!dataISO) return '';
+  const [ano, mes, dia] = dataISO.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
 function formatarDataPorExtenso(dataStr) {
   const str = dataStr || getHojeISO();
   try {
     const [ano, mes, dia] = str.split('-');
-    const meses = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    const mesIndex = parseInt(mes, 10) - 1;
-    return `Cascavel, ${parseInt(dia, 10)} de ${meses[mesIndex]} de ${ano}`;
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    return `Cascavel, ${parseInt(dia, 10)} de ${meses[parseInt(mes, 10) - 1]} de ${ano}`;
   } catch {
     const hoje = new Date();
-    const meses = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     return `Cascavel, ${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}`;
   }
 }
 
+/** Retorna a segunda (0=Dom,1=Seg) e o sábado da semana de uma data ISO */
+function getSemana(dataISO) {
+  const [ano, mes, dia] = dataISO.split('-').map(Number);
+  const d = new Date(ano, mes - 1, dia);
+  const diaSem = d.getDay(); // 0=Dom
+  const diffSeg = (diaSem === 0 ? -6 : 1 - diaSem);
+  const seg = new Date(d); seg.setDate(d.getDate() + diffSeg);
+  const sab = new Date(seg); sab.setDate(seg.getDate() + 5);
+  // gerar array de 6 dias: seg → sab
+  const dias = [];
+  for (let i = 0; i <= 5; i++) {
+    const dt = new Date(seg); dt.setDate(seg.getDate() + i);
+    dias.push(dt.toISOString().split('T')[0]);
+  }
+  return { inicio: seg.toISOString().split('T')[0], fim: sab.toISOString().split('T')[0], dias };
+}
+
+/** Retorna todos os dias do mês de uma data ISO */
+function getDiasMes(dataISO) {
+  const [ano, mes] = dataISO.split('-').map(Number);
+  const total = new Date(ano, mes, 0).getDate();
+  const dias = [];
+  for (let d = 1; d <= total; d++) {
+    dias.push(`${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  }
+  return dias;
+}
+
+// ─── Componente de Impressão ───────────────────────────────────────────────────
+
+function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, empresa, numeroRecibo }) {
+  const valorExtenso = numeroPorExtenso(total);
+  const dataExt = formatarDataPorExtenso(dataEmissao);
+
+  const totalFormatado = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const labelTipo = tipo === 'diaria' ? 'Diária' : tipo === 'semanal' ? 'Semanal' : 'Mensal';
+
+  return (
+    <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-8 sm:p-12 flex flex-col justify-between text-zinc-950 font-serif relative overflow-hidden print:p-0 print:border-none print:shadow-none print:rounded-none">
+      
+      {/* Cabeçalho */}
+      <div>
+        <div className="flex items-start justify-between pb-6 border-b-2 border-zinc-900">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-bold tracking-normal font-serif">Recibo</h1>
+              <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-300 text-zinc-700 font-sans text-xs font-black uppercase tracking-wider">
+                {labelTipo}
+              </span>
+              {numeroRecibo && (
+                <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-300 text-zinc-800 font-sans text-xs font-black tracking-wider uppercase">
+                  Nº {numeroRecibo}
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-sans text-zinc-500 font-medium">{empresa}</p>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-black font-sans tracking-tight">R$ {totalFormatado}</div>
+            <div className="text-xs font-sans text-zinc-500 font-semibold mt-0.5">{valorExtenso}</div>
+          </div>
+        </div>
+
+        {/* Lista de dias */}
+        <div className="mt-6">
+          <table className="w-full text-sm font-sans border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="text-left py-1.5 font-bold text-zinc-700 text-xs uppercase tracking-wide">Data</th>
+                <th className="text-right py-1.5 font-bold text-zinc-700 text-xs uppercase tracking-wide">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {diasComValor.map((item, idx) => (
+                <tr key={idx} className="border-b border-zinc-100">
+                  <td className="py-1.5 text-zinc-800">Dia {formatarDataBR(item.data)}</td>
+                  <td className="py-1.5 text-right font-semibold text-zinc-900">
+                    {item.valor > 0
+                      ? `R$ ${item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                      : <span className="text-zinc-400 text-xs">—</span>
+                    }
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-zinc-900">
+                <td className="pt-3 pb-1 font-black text-base">Total:</td>
+                <td className="pt-3 pb-1 text-right font-black text-base">R$ {totalFormatado}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Texto jurídico */}
+        <div className="mt-6 text-sm leading-relaxed text-justify font-serif text-zinc-800">
+          <p className="indent-6">
+            Recebi da <strong className="font-extrabold uppercase tracking-wide">{empresa}</strong> a importância de{' '}
+            <strong>R$ {totalFormatado} ({valorExtenso})</strong> referente ao pagamento de diárias trabalhadas, conforme
+            relação acima.
+          </p>
+          <p className="mt-2 indent-6">
+            Onde firmo o presente dando plena, geral e irrevogável quitação do valor recebido, para os devidos fins e efeitos legais.
+          </p>
+        </div>
+      </div>
+
+      {/* Rodapé: data, assinatura, nome, CPF */}
+      <div className="mt-10 space-y-8">
+        <div className="text-center text-base font-serif">{dataExt}</div>
+
+        <div className="flex flex-col items-center justify-center gap-1">
+          <div className="w-72 sm:w-80 border-t border-zinc-900" />
+          <div className="font-bold text-base font-sans uppercase tracking-tight">{nome || '___________________________'}</div>
+          {cpf && <div className="text-sm font-sans text-zinc-600">CPF: {cpf}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Componente Principal ─────────────────────────────────────────────────────
+
 export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUpdateDiarista, onBack }) {
-  const [diaristaId, setDiaristaId] = useState(diaristaInicial?.id || null);
-  const [dadosRecibo, setDadosRecibo] = useState({
-    nome: 'Daniel Felipe da Silva',
-    cpf: '085.610.493-08',
-    valorUnitario: 70.0,
-    diarias: 1,
-    pago: true,
-    referente: 'pagamento de 01 diária trabalhada e almoço',
+  const [tipoRecibo, setTipoRecibo] = useState('diaria'); // 'diaria' | 'semanal' | 'mensal'
+
+  const [form, setForm] = useState({
+    nome: '',
+    cpf: '',
+    valorUnitario: 120.0,
+    dataRef: getHojeISO(),
     empresa: 'DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS LTDA',
-    cidade: 'Cascavel',
-    data: new Date().toISOString().split('T')[0],
-    pix: '085.610.493-08',
-    motorista: 'Motorista Felipe',
-    profissao: '',
   });
 
+  const [diaristaId, setDiaristaId] = useState(null);
   const [copiadoPix, setCopiadoPix] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [reciboSalvo, setReciboSalvo] = useState(null);
   const [mensagemSucesso, setMensagemSucesso] = useState('');
   const [mensagemErro, setMensagemErro] = useState('');
 
-  // Se receber um diarista inicial vindo da relação
+  // Dias com valores buscados do banco para o período
+  const [diasPeriodo, setDiasPeriodo] = useState([]); // [{ data: 'YYYY-MM-DD', valor: number }]
+  const [carregandoDias, setCarregandoDias] = useState(false);
+
+  // Preenche form com diarista inicial vindo da relação
   useEffect(() => {
     if (diaristaInicial) {
-      const diariasQtd = parseInt(diaristaInicial.diarias, 10) || 1;
-      const refTexto = diariasQtd > 1 
-        ? `pagamento de ${String(diariasQtd).padStart(2, '0')} diárias trabalhadas e almoço`
-        : 'pagamento de 01 diária trabalhada e almoço';
-
       setDiaristaId(diaristaInicial.id);
       setReciboSalvo(null);
-      setDadosRecibo({
+      setForm(prev => ({
+        ...prev,
         nome: diaristaInicial.nome || '',
         cpf: diaristaInicial.tipoPix === 'cpf' ? diaristaInicial.pix : '',
-        valorUnitario: parseFloat(diaristaInicial.valor) || 70.0,
-        diarias: diariasQtd,
-        pago: diaristaInicial.pago ?? true,
-        referente: refTexto,
-        empresa: 'DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS LTDA',
-        cidade: 'Cascavel',
-        data: diaristaInicial.data || new Date().toISOString().split('T')[0],
-        pix: diaristaInicial.pix || '',
-        motorista: diaristaInicial.motorista || '',
-        profissao: diaristaInicial.profissao || '',
-      });
+        valorUnitario: parseFloat(diaristaInicial.valor) || 120.0,
+        dataRef: diaristaInicial.data || getHojeISO(),
+      }));
     }
   }, [diaristaInicial]);
 
-  function handleSelecionarDiarista(e) {
-    const id = e.target.value;
-    if (!id) return;
-    const selecionado = diaristas.find((d) => d.id === id);
-    if (selecionado) {
-      const diariasQtd = parseInt(selecionado.diarias, 10) || 1;
-      const refTexto = diariasQtd > 1 
-        ? `pagamento de ${String(diariasQtd).padStart(2, '0')} diárias trabalhadas e almoço`
-        : 'pagamento de 01 diária trabalhada e almoço';
+  // Quando tipo ou data de ref muda, busca os dias do período
+  useEffect(() => {
+    buscarDiasPeriodo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipoRecibo, form.dataRef, form.nome]);
 
-      setDiaristaId(selecionado.id);
-      setReciboSalvo(null);
-      setDadosRecibo((prev) => ({
-        ...prev,
-        nome: selecionado.nome,
-        cpf: selecionado.tipoPix === 'cpf' ? selecionado.pix : prev.cpf,
-        valorUnitario: parseFloat(selecionado.valor) || 70.0,
-        diarias: diariasQtd,
-        pago: selecionado.pago ?? true,
-        referente: refTexto,
-        pix: selecionado.pix || '',
-        data: selecionado.data || prev.data,
-        motorista: selecionado.motorista || prev.motorista,
-        profissao: selecionado.profissao || prev.profissao,
+  async function buscarDiasPeriodo() {
+    if (!form.nome && !diaristaId) {
+      setDiasPeriodo([]);
+      return;
+    }
+    setCarregandoDias(true);
+    try {
+      let diasISO = [];
+      if (tipoRecibo === 'diaria') {
+        diasISO = [form.dataRef];
+      } else if (tipoRecibo === 'semanal') {
+        diasISO = getSemana(form.dataRef).dias;
+      } else {
+        diasISO = getDiasMes(form.dataRef);
+      }
+
+      // Busca diaristas do banco para o período
+      let dadosBanco = [];
+      if (tipoRecibo === 'diaria') {
+        const res = await getDiaristasApi(form.dataRef);
+        dadosBanco = Array.isArray(res) ? res : [];
+      } else if (tipoRecibo === 'semanal') {
+        // Busca cada dia da semana
+        const semana = getSemana(form.dataRef);
+        const promises = semana.dias.map(d => getDiaristasApi(d).catch(() => []));
+        const results = await Promise.all(promises);
+        dadosBanco = results.flat();
+      } else {
+        const [ano, mes] = form.dataRef.split('-');
+        const mesISO = `${ano}-${mes}`;
+        const res = await getDiaristasApi(null, mesISO);
+        dadosBanco = Array.isArray(res) ? res : [];
+      }
+
+      // Filtra pelo nome do diarista (case-insensitive)
+      const nomeFiltro = form.nome?.trim().toLowerCase();
+      const filtrados = nomeFiltro
+        ? dadosBanco.filter(d => d.nome?.toLowerCase().includes(nomeFiltro))
+        : dadosBanco;
+
+      // Monta mapa: data -> valor total do diarista
+      const mapaValores = {};
+      filtrados.forEach(d => {
+        if (d.data) {
+          const v = (parseFloat(d.valor_diaria) || 0) * (parseInt(d.quantidade_diarias, 10) || 1);
+          mapaValores[d.data] = (mapaValores[d.data] || 0) + v;
+        }
+      });
+
+      // Monta lista de dias do período
+      const lista = diasISO.map(data => ({
+        data,
+        valor: mapaValores[data] || 0,
       }));
+
+      setDiasPeriodo(lista);
+    } catch (err) {
+      console.warn('Erro ao buscar dias do período:', err);
+      // Fallback: usa valor unitário do form
+      let diasISO = [];
+      if (tipoRecibo === 'diaria') diasISO = [form.dataRef];
+      else if (tipoRecibo === 'semanal') diasISO = getSemana(form.dataRef).dias;
+      else diasISO = getDiasMes(form.dataRef);
+      setDiasPeriodo(diasISO.map(data => ({ data, valor: 0 })));
+    } finally {
+      setCarregandoDias(false);
     }
   }
 
   function handleChange(e) {
-    const { name, value, type, checked } = e.target;
-    setDadosRecibo((prev) => {
-      const atualizado = {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }
+
+  function handleSelecionarDiarista(e) {
+    const id = e.target.value;
+    if (!id) return;
+    const sel = diaristas.find(d => d.id === id);
+    if (sel) {
+      setDiaristaId(sel.id);
+      setReciboSalvo(null);
+      setForm(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value,
-      };
-
-      if (name === 'diarias') {
-        const dQtd = parseInt(value, 10) || 1;
-        atualizado.referente = dQtd > 1 
-          ? `pagamento de ${String(dQtd).padStart(2, '0')} diárias trabalhadas e almoço`
-          : 'pagamento de 01 diária trabalhada e almoço';
-      }
-
-      return atualizado;
-    });
+        nome: sel.nome || '',
+        cpf: sel.tipoPix === 'cpf' ? sel.pix : prev.cpf,
+        valorUnitario: parseFloat(sel.valor) || 120.0,
+        dataRef: sel.data || prev.dataRef,
+      }));
+    }
   }
 
-  function handleMudarDiarias(delta) {
-    setDadosRecibo((prev) => {
-      const novaQtd = Math.max(1, (parseInt(prev.diarias, 10) || 1) + delta);
-      const refTexto = novaQtd > 1 
-        ? `pagamento de ${String(novaQtd).padStart(2, '0')} diárias trabalhadas e almoço`
-        : 'pagamento de 01 diária trabalhada e almoço';
-      
-      if (diaristaId && onUpdateDiarista) {
-        onUpdateDiarista({ id: diaristaId, diarias: novaQtd });
-      }
+  // Total calculado com base nos dias que têm valor
+  const diasComValor = diasPeriodo;
+  const totalGeral = diasComValor.reduce((acc, d) => acc + d.valor, 0);
 
-      return {
-        ...prev,
-        diarias: novaQtd,
-        referente: refTexto,
-      };
-    });
-  }
+  // Se nenhum dia tem valor do banco, usa o valor unitário do form para os dias do período
+  const diasParaExibir = (() => {
+    const temValorBanco = diasComValor.some(d => d.valor > 0);
+    if (temValorBanco) return diasComValor;
+    return diasComValor.map(d => ({ ...d, valor: parseFloat(form.valorUnitario) || 0 }));
+  })();
+  const totalExibido = diasParaExibir.reduce((acc, d) => acc + d.valor, 0);
 
-  function handleTogglePago(novoStatus) {
-    setDadosRecibo((prev) => {
-      const updated = { ...prev, pago: novoStatus };
-      if (diaristaId && onUpdateDiarista) {
-        onUpdateDiarista({ id: diaristaId, pago: novoStatus });
-      }
-      return updated;
-    });
-  }
-
-  function handleCopiarPix() {
-    if (!dadosRecibo.pix) return;
-    navigator.clipboard.writeText(dadosRecibo.pix);
-    setCopiadoPix(true);
-    setTimeout(() => setCopiadoPix(false), 2000);
-  }
-
-  // Cálculos de valor
-  const qtdDiarias = parseInt(dadosRecibo.diarias, 10) || 1;
-  const valorUnit = parseFloat(dadosRecibo.valorUnitario) || 0;
-  const valorTotalCalculado = valorUnit * qtdDiarias;
-  const valorExtenso = numeroPorExtenso(valorTotalCalculado);
-  const dataFormatada = formatarDataPorExtenso(dadosRecibo.data);
-
-  // Salvar no Banco de Dados PostgreSQL
   async function handleSalvarRecibo(silent = false) {
     try {
       setSalvando(true);
       setMensagemErro('');
       setMensagemSucesso('');
-
       const payload = {
         diarista_id: diaristaId || null,
-        nome_diarista: dadosRecibo.nome || 'Não informado',
-        cpf_diarista: dadosRecibo.cpf || null,
-        funcao: dadosRecibo.profissao || null,
-        valor_unitario: valorUnit,
-        dias_trabalhados: qtdDiarias,
-        tem_almoco: true,
+        nome_diarista: form.nome || 'Não informado',
+        cpf_diarista: form.cpf || null,
+        funcao: null,
+        valor_unitario: parseFloat(form.valorUnitario) || 0,
+        dias_trabalhados: diasParaExibir.filter(d => d.valor > 0).length || 1,
+        tem_almoco: false,
         valor_almoco: 0.0,
-        valor_total: valorTotalCalculado,
-        valor_extenso: valorExtenso,
+        valor_total: totalExibido,
+        valor_extenso: numeroPorExtenso(totalExibido),
         tipo_pix: 'cpf',
-        chave_pix: dadosRecibo.pix || null,
-        data_referencia: dadosRecibo.data || getHojeISO(),
-        status_pagamento: Boolean(dadosRecibo.pago),
-        observacoes: dadosRecibo.referente || '',
+        chave_pix: null,
+        data_referencia: form.dataRef || getHojeISO(),
+        status_pagamento: true,
+        observacoes: `Recibo ${tipoRecibo}`,
       };
-
       const resultado = await emitirReciboApi(payload);
       setReciboSalvo(resultado);
-      setMensagemSucesso(`Recibo nº ${resultado.numero_recibo} registrado com sucesso no banco de dados!`);
+      setMensagemSucesso(`Recibo nº ${resultado.numero_recibo} registrado com sucesso!`);
       return resultado;
     } catch (err) {
-      console.error('Erro ao salvar recibo:', err);
-      if (!silent) {
-        setMensagemErro(err.message || 'Erro ao registrar recibo no banco de dados.');
-      }
+      if (!silent) setMensagemErro(err.message || 'Erro ao registrar recibo.');
       return null;
     } finally {
       setSalvando(false);
@@ -275,16 +377,16 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   }
 
   async function handleImprimir() {
-    if (!reciboSalvo) {
-      await handleSalvarRecibo(true);
-    }
+    if (!reciboSalvo) await handleSalvarRecibo(true);
     window.print();
   }
 
+  const labelTipo = tipoRecibo === 'diaria' ? 'Diária' : tipoRecibo === 'semanal' ? 'Semanal' : 'Mensal';
+
   return (
     <div className="space-y-6">
-      
-      {/* Topo / Barra de Navegação */}
+
+      {/* ── Barra de Navegação ─────────────────────────────── */}
       <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-zinc-200/80 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 no-print">
         <div className="flex items-center gap-4">
           <button
@@ -300,13 +402,12 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
               <span>Emissão Oficial</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">
-              Recibo Individual de Diária
+              Recibos — <span className="text-red-600">{labelTipo}</span>
             </h2>
           </div>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Botão Salvar no Banco de Dados */}
           <button
             onClick={() => handleSalvarRecibo(false)}
             disabled={salvando}
@@ -317,24 +418,14 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
             }`}
           >
             {salvando ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Salvando no Banco...</span>
-              </>
+              <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Salvando...</span></>
             ) : reciboSalvo ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                <span>Salvo no Banco ({reciboSalvo.numero_recibo})</span>
-              </>
+              <><CheckCircle2 className="w-4 h-4 text-emerald-200" /><span>Salvo ({reciboSalvo.numero_recibo})</span></>
             ) : (
-              <>
-                <Save className="w-4 h-4 text-zinc-300" />
-                <span>Salvar no Banco</span>
-              </>
+              <><Save className="w-4 h-4 text-zinc-300" /><span>Salvar no Banco</span></>
             )}
           </button>
 
-          {/* Botão Imprimir Recibo */}
           <button
             onClick={handleImprimir}
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-sm shadow-lg shadow-red-600/30 hover:shadow-red-600/50 transform hover:-translate-y-0.5 transition cursor-pointer"
@@ -345,344 +436,194 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
         </div>
       </div>
 
-      {/* Banner de Feedback de Sucesso */}
+      {/* ── Feedbacks ─────────────────────────────────────── */}
       {mensagemSucesso && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-2xl flex items-center justify-between shadow-md no-print animate-fadeIn">
+        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-2xl flex items-center justify-between shadow-md no-print">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <div>
-              <p className="font-bold text-sm">{mensagemSucesso}</p>
-              <p className="text-xs text-emerald-700">O comprovante foi gravado na tabela <span className="font-mono font-semibold">public.recibos</span> com criptografia segura.</p>
-            </div>
+            <p className="font-bold text-sm">{mensagemSucesso}</p>
           </div>
-          <button 
-            onClick={() => setMensagemSucesso('')}
-            className="text-xs text-emerald-600 hover:text-emerald-900 font-bold px-2 py-1 rounded-lg"
-          >
-            Fechar
-          </button>
+          <button onClick={() => setMensagemSucesso('')} className="text-xs text-emerald-600 hover:text-emerald-900 font-bold px-2 py-1 rounded-lg">Fechar</button>
         </div>
       )}
-
-      {/* Banner de Feedback de Erro */}
       {mensagemErro && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-2xl flex items-center justify-between shadow-md no-print animate-fadeIn">
+        <div className="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-2xl flex items-center justify-between shadow-md no-print">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
             <p className="font-bold text-sm">{mensagemErro}</p>
           </div>
-          <button 
-            onClick={() => setMensagemErro('')}
-            className="text-xs text-red-600 hover:text-red-900 font-bold px-2 py-1 rounded-lg"
-          >
-            Fechar
-          </button>
+          <button onClick={() => setMensagemErro('')} className="text-xs text-red-600 hover:text-red-900 font-bold px-2 py-1 rounded-lg">Fechar</button>
         </div>
       )}
 
-      {/* Grid: Painel de Edição à Esquerda + Visualização do Recibo à Direita */}
+      {/* ── Grid Principal ───────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Painel de Edição à Esquerda */}
-        <div className="lg:col-span-5 space-y-6 no-print">
+
+        {/* ── Painel de Configuração ── */}
+        <div className="lg:col-span-5 space-y-5 no-print">
           <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-7 shadow-xl border border-zinc-200/80 space-y-5">
-            
-            {/* Seleção de Diarista Cadastrado */}
-            {diaristas.length > 0 && (
-              <div>
-                <label className="block text-xs font-black uppercase text-red-700 mb-2 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5" />
-                  Preencher com Diarista Cadastrado
-                </label>
-                <select
-                  onChange={handleSelecionarDiarista}
-                  value={diaristaId || ''}
-                  className="w-full px-4 py-3 rounded-2xl border border-red-200 bg-red-50/50 text-sm font-bold text-zinc-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 cursor-pointer"
-                >
-                  <option value="" disabled>Selecione um diarista para autopreencher...</option>
-                  {diaristas.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.nome} - {d.diarias || 1} diária(s) (Total: R$ {((parseFloat(d.valor) || 0) * (d.diarias || 1)).toFixed(2).replace('.', ',')})
-                    </option>
-                  ))}
-                </select>
+
+            {/* Tipo de recibo */}
+            <div>
+              <label className="block text-xs font-black uppercase text-red-700 mb-3 flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5" />
+                Tipo de Recibo
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'diaria', label: 'Diária', icon: CalendarDays, desc: 'Somente o dia selecionado' },
+                  { id: 'semanal', label: 'Semanal', icon: CalendarRange, desc: 'Segunda a Sábado' },
+                  { id: 'mensal', label: 'Mensal', icon: CalendarCheck, desc: 'Todo o mês' },
+                ].map(opt => {
+                  const Icon = opt.icon;
+                  const ativo = tipoRecibo === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => { setTipoRecibo(opt.id); setReciboSalvo(null); }}
+                      className={`flex flex-col items-center gap-1.5 px-3 py-4 rounded-2xl border-2 text-center transition-all cursor-pointer ${
+                        ativo
+                          ? 'border-red-500 bg-red-50 text-red-700 shadow-md shadow-red-100'
+                          : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 ${ativo ? 'text-red-600' : 'text-zinc-400'}`} />
+                      <span className={`text-xs font-black ${ativo ? 'text-red-700' : 'text-zinc-700'}`}>{opt.label}</span>
+                      <span className="text-[10px] leading-tight text-zinc-500">{opt.desc}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
-            {/* Campos de Dados */}
-            <div className="pt-2 border-t border-zinc-100 space-y-4">
+            <div className="border-t border-zinc-100 pt-4 space-y-4">
 
+              {/* Selecionar diarista cadastrado */}
+              {diaristas.length > 0 && (
+                <div>
+                  <label className="block text-xs font-black uppercase text-red-700 mb-2 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
+                    Preencher com Diarista Cadastrado
+                  </label>
+                  <select
+                    onChange={handleSelecionarDiarista}
+                    value={diaristaId || ''}
+                    className="w-full px-4 py-3 rounded-2xl border border-red-200 bg-red-50/50 text-sm font-bold text-zinc-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 cursor-pointer"
+                  >
+                    <option value="" disabled>Selecione um diarista para autopreencher...</option>
+                    {diaristas.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.nome} — R$ {((parseFloat(d.valor) || 0) * (d.diarias || 1)).toFixed(2).replace('.', ',')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-
+              {/* Nome */}
               <div>
-                <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                  Nome do Diarista / Colaborador
-                </label>
+                <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">Nome do Diarista</label>
                 <input
                   type="text"
                   name="nome"
-                  value={dadosRecibo.nome}
+                  value={form.nome}
                   onChange={handleChange}
                   placeholder="Nome completo"
                   className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
                 />
               </div>
 
-              {/* Valores e Quantidade de Diárias */}
+              {/* CPF + Data de Referência */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    Valor Diária (R$)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">R$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      name="valorUnitario"
-                      value={dadosRecibo.valorUnitario}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-300 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    Qtd. de Diárias
-                  </label>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleMudarDiarias(-1)}
-                      disabled={qtdDiarias <= 1}
-                      className="p-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 text-zinc-700 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="31"
-                      name="diarias"
-                      value={dadosRecibo.diarias}
-                      onChange={handleChange}
-                      className="w-full px-2 py-2.5 rounded-xl border border-zinc-300 text-sm font-bold text-center text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleMudarDiarias(1)}
-                      className="p-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 text-zinc-700 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD DE TOTAL CALCULADO DO RECIBO */}
-              <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-black text-red-200 uppercase block tracking-wider">
-                    Total a Pagar / Quitado:
-                  </span>
-                  <span className="text-xs text-red-100 font-semibold">
-                    {qtdDiarias}x de R$ {valorUnit.toFixed(2).replace('.', ',')}
-                  </span>
-                </div>
-                <div className="text-2xl font-black tracking-tight">
-                  R$ {valorTotalCalculado.toFixed(2).replace('.', ',')}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    CPF
-                  </label>
+                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">CPF</label>
                   <input
                     type="text"
                     name="cpf"
-                    value={dadosRecibo.cpf}
+                    value={form.cpf}
                     onChange={handleChange}
                     placeholder="000.000.000-00"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    Data da Emissão
+                    {tipoRecibo === 'diaria' ? 'Data' : tipoRecibo === 'semanal' ? 'Qualquer dia da Semana' : 'Qualquer dia do Mês'}
                   </label>
                   <input
                     type="date"
-                    name="data"
-                    value={dadosRecibo.data}
+                    name="dataRef"
+                    value={form.dataRef}
                     onChange={handleChange}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
                   />
                 </div>
               </div>
 
+              {/* Valor unitário */}
               <div>
                 <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                  Referente a
+                  Valor por Diária (R$) — usado se não houver dado no banco
                 </label>
-                <input
-                  type="text"
-                  name="referente"
-                  value={dadosRecibo.referente}
-                  onChange={handleChange}
-                  placeholder="pagamento de diárias trabalhadas e almoço"
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    Chave PIX
-                  </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-500">R$</span>
                   <input
-                    type="text"
-                    name="pix"
-                    value={dadosRecibo.pix}
+                    type="number"
+                    step="0.01"
+                    name="valorUnitario"
+                    value={form.valorUnitario}
                     onChange={handleChange}
-                    placeholder="Chave PIX"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-xs font-mono text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    Função
-                  </label>
-                  <input
-                    type="text"
-                    name="profissao"
-                    value={dadosRecibo.profissao}
-                    onChange={handleChange}
-                    placeholder="Ex: Ajudante de Carga"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-300 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Ação Rápida de Copiar PIX */}
-            {dadosRecibo.pix && (
+              {/* Buscar dias */}
               <button
                 type="button"
-                onClick={handleCopiarPix}
-                className="w-full py-3 px-4 rounded-2xl border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                onClick={buscarDiasPeriodo}
+                disabled={carregandoDias}
+                className="w-full py-3 rounded-2xl bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 text-zinc-700 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
               >
-                {copiadoPix ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-600 animate-bounce" />
-                    <span className="text-emerald-700 font-black">Chave PIX copiada com sucesso!</span>
-                  </>
+                {carregandoDias ? (
+                  <><div className="w-3.5 h-3.5 border-2 border-zinc-500 border-t-transparent rounded-full animate-spin" /><span>Buscando dias...</span></>
                 ) : (
-                  <>
-                    <Copy className="w-4 h-4 text-zinc-500" />
-                    <span>Copiar Chave PIX ({dadosRecibo.pix})</span>
-                  </>
+                  <><Calendar className="w-3.5 h-3.5" /><span>Atualizar dados do período</span></>
                 )}
               </button>
-            )}
+            </div>
+
+            {/* Card Total */}
+            <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-2xl shadow-md flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-black text-red-200 uppercase block tracking-wider">
+                  Total {labelTipo}:
+                </span>
+                <span className="text-xs text-red-100 font-semibold">
+                  {diasParaExibir.filter(d => d.valor > 0).length} dia(s) com valor
+                </span>
+              </div>
+              <div className="text-2xl font-black tracking-tight">
+                R$ {totalExibido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
 
           </div>
         </div>
 
-        {/* Visualização do Recibo à Direita */}
+        {/* ── Prévia do Recibo ── */}
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-8 sm:p-14 min-h-[620px] flex flex-col justify-between text-zinc-950 font-serif relative overflow-hidden print:p-0 print:border-none print:shadow-none print:min-h-0">
-            
-            {/* Cabeçalho do Recibo */}
-            <div>
-              <div className="flex items-center justify-between pb-8 border-b border-zinc-300">
-                <div>
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-normal font-serif">
-                      Recibo
-                    </h1>
-                    {reciboSalvo?.numero_recibo && (
-                      <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-300 text-zinc-800 font-sans text-xs font-black tracking-wider uppercase">
-                        Nº {reciboSalvo.numero_recibo}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-black font-sans tracking-tight">
-                    R${valorTotalCalculado.toFixed(2).replace('.', ',')}
-                  </div>
-                  {qtdDiarias > 1 && (
-                    <div className="text-xs font-sans text-zinc-500 font-semibold">
-                      {qtdDiarias} diárias (R$ {valorUnit.toFixed(2).replace('.', ',')}/dia)
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Corpo Principal do Recibo */}
-              <div className="mt-8 space-y-6 text-justify text-base sm:text-lg leading-relaxed font-serif text-zinc-900">
-                {dadosRecibo.pago ? (
-                  <>
-                    <p className="indent-8">
-                      Recebi da <strong className="font-extrabold tracking-wide">DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS LTDA</strong> a importância de <strong>R${valorTotalCalculado.toFixed(2).replace('.', ',')} ({valorExtenso})</strong> referente {dadosRecibo.referente || 'pagamento de diária trabalhada e almoço'}.
-                    </p>
-
-                    <p className="indent-8">
-                      Onde firmo o presente dando plena, geral e irrevogável quitação do valor recebido, para os devidos fins e efeitos legais.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="indent-8">
-                      Documento de comprovação de serviços prestados para a <strong className="font-extrabold tracking-wide">DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS LTDA</strong> referente {dadosRecibo.referente || 'diárias trabalhadas e almoço'}, no valor total a ser pago de <strong>R${valorTotalCalculado.toFixed(2).replace('.', ',')} ({valorExtenso})</strong>.
-                    </p>
-
-                    <p className="indent-8">
-                      O presente documento atesta o registro das diárias e autoriza a liquidação do pagamento correspondente.
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Local, Data e Assinatura */}
-            <div className="mt-14 space-y-12">
-              <div className="text-center text-base sm:text-lg font-serif">
-                {dataFormatada}
-              </div>
-
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-72 sm:w-80 border-t border-zinc-900 mb-2"></div>
-                <div className="font-bold text-base sm:text-lg font-sans uppercase tracking-tight">
-                  {dadosRecibo.nome || 'Daniel Felipe da Silva'}
-                </div>
-                {dadosRecibo.cpf && (
-                  <div className="text-xs sm:text-sm font-sans text-zinc-700">
-                    CPF: {dadosRecibo.cpf}
-                  </div>
-                )}
-              </div>
-
-              {/* Bloco Inferior de Identificação / PIX */}
-              <div className="pt-6 border-t border-zinc-200/80 font-sans text-sm text-zinc-800 space-y-0.5">
-                {dadosRecibo.pix && (
-                  <div className="font-bold">
-                    PIX: {dadosRecibo.pix}
-                  </div>
-                )}
-                <div className="font-medium">
-                  {dadosRecibo.nome || 'Daniel Felipe da Silva'}
-                </div>
-              </div>
-            </div>
-
-          </div>
+          <ReciboImpressao
+            tipo={tipoRecibo}
+            nome={form.nome}
+            cpf={form.cpf}
+            diasComValor={diasParaExibir}
+            total={totalExibido}
+            dataEmissao={form.dataRef}
+            empresa={form.empresa}
+            numeroRecibo={reciboSalvo?.numero_recibo}
+          />
         </div>
 
       </div>

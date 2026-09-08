@@ -1,0 +1,48 @@
+Quando eu clica em recibo:
+    ->Quero que seja o seguinte formato:
+      -Semanal: Vai aparecer td o valor da semana (Segunda a Sabado)
+        -Exemplo:
+          ->Dia 08/09/2026: 120,00
+          ->Dia 09/09/2026: 120,00
+          ->Dia 10/09/2026: 120,00
+          ->Dia 11/09/2026: 120,00
+          ->Dia 12/09/2026: 120,00
+          ->Total: 600,00
+          ->Nome: CARLOS ALBERTO SILVA
+          ->CPF: 123.456.789-00
+          ->Assinatura:____________________
+        ->Mes: 1
+        ->Dia: 12
+        ->Mês: 09
+        ->Ano: 2026
+    ->Diaria: Vai aparecer so o valor do dia selecionado
+      ->Exemplo:
+        ->Dia 01/09/2026: 120,00
+        ->Total: 120,00
+        ->Nome: CARLOS ALBERTO SILVA
+        ->CPF: 123.456.789-00
+        ->Assinatura:____________________
+      ->Mes: 1
+      ->Dia: 12
+      ->Mês: 09
+      ->Ano: 2026
+  ->Mensal: Vai aparecer td o valor do mes
+    ->Exemplo:
+      ->Dia 01/09/2026: 120,00
+      ->Dia 02/09/2026: 120,00
+      ->Dia 03/09/2026: 120,00
+      ->Dia 04/09/2026: 120,00
+      ->Dia 05/09/2026: 120,00
+      ->Dia 06/09/2026: 120,00
+      ->Dia 07/09/2026: 120,00
+      ->Dia 08/09/2026: 120,00
+      ->Dia 09/09/2026: 120,00
+      ->Dia 10/09/2026: 120,00
+      ->Dia 11/09/2026: 120,00
+      ->Dia 12/09/2026: 120,00
+      ->Total: 600,00
+      ->Nome: CARLOS ALBERTO SILVA
+      ->CPF: 123.456.789-00
+      ->Assinatura:____________________
+
+#QUERO QUE VC FAÇA ISSO TANTO NA PARTE DE RECIBO QUE TEM NA IMG1 QUANTO NA PARTE DE IMG2, E TBB NA PARTE DE RECIBO INDIVIDUAL TROQUE PARA RECIBOS

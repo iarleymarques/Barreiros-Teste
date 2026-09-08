@@ -282,10 +282,10 @@ export default function PortalColaborador({ user, onLogout }) {
                     <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
                       <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
                         <Receipt className="w-3.5 h-3.5 text-red-200" />
-                        3. Recibo Individual
+                        3. Recibos
                       </span>
                       <p className="text-red-100/90 text-[11px] leading-relaxed">
-                        Emissão e impressão do recibo de diária com quitação legal.
+                        Emissão de recibo diário, semanal ou mensal com quitação legal.
                       </p>
                     </div>
 
@@ -377,10 +377,10 @@ export default function PortalColaborador({ user, onLogout }) {
                       <Receipt className="w-6 h-6" />
                     </div>
                     <h2 className="text-lg font-black text-zinc-900 group-hover:text-red-600 transition-colors">
-                      Recibo individual
+                      Recibos
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
-                      Geração de recibo de diária e almoço com quitação legal.
+                      Geração de recibo diário, semanal ou mensal com quitação legal.
                     </p>
                   </div>
 
