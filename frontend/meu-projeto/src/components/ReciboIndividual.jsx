@@ -109,16 +109,12 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
 
   // Texto do referente adaptado por tipo
   const textoReferente = (() => {
-    const [ano, mes] = (dataEmissao || getHojeISO()).split('-');
-    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const nomeMes = meses[parseInt(mes, 10) - 1] || '';
     if (tipo === 'diaria') {
       return `diária por serviços prestados nesta data`;
     } else if (tipo === 'semanal') {
-      const sem = getSemana(dataEmissao || getHojeISO());
-      return `diárias por serviços prestados na semana de ${formatarDataBR(sem.inicio)} a ${formatarDataBR(sem.fim)}`;
+      return `diárias por serviços prestados nesta semana`;
     } else {
-      return `diárias por serviços prestados no mês de ${nomeMes} de ${ano}`;
+      return `diárias por serviços prestados neste mês`;
     }
   })();
 
