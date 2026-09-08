@@ -63,11 +63,11 @@ function formatarDataPorExtenso(dataStr) {
   const str = dataStr || getHojeISO();
   try {
     const [ano, mes, dia] = str.split('-');
-    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     return `Cascavel, ${parseInt(dia, 10)} de ${meses[parseInt(mes, 10) - 1]} de ${ano}`;
   } catch {
     const hoje = new Date();
-    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     return `Cascavel, ${hoje.getDate()} de ${meses[hoje.getMonth()]} de ${hoje.getFullYear()}`;
   }
 }
@@ -95,7 +95,7 @@ function getDiasMes(dataISO) {
   const total = new Date(ano, mes, 0).getDate();
   const dias = [];
   for (let d = 1; d <= total; d++) {
-    dias.push(`${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    dias.push(`${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
   }
   return dias;
 }
@@ -143,7 +143,7 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
           <strong className="font-extrabold uppercase tracking-wide text-zinc-950">
             {empresa}
           </strong>{' '}
-          a importância supra referente ao pagamento de {textoReferente}.
+          a importância da supra referente ao pagamento de {textoReferente}.
         </p>
 
         <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
@@ -398,11 +398,10 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
           <button
             onClick={() => handleSalvarRecibo(false)}
             disabled={salvando}
-            className={`inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg transition cursor-pointer disabled:opacity-60 ${
-              reciboSalvo
+            className={`inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg transition cursor-pointer disabled:opacity-60 ${reciboSalvo
                 ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/30'
                 : 'bg-zinc-900 hover:bg-black text-white shadow-zinc-900/30 hover:shadow-zinc-900/50 transform hover:-translate-y-0.5'
-            }`}
+              }`}
           >
             {salvando ? (
               <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /><span>Salvando...</span></>
@@ -469,11 +468,10 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                       key={opt.id}
                       type="button"
                       onClick={() => { setTipoRecibo(opt.id); setReciboSalvo(null); }}
-                      className={`flex flex-col items-center gap-1.5 px-3 py-4 rounded-2xl border-2 text-center transition-all cursor-pointer ${
-                        ativo
+                      className={`flex flex-col items-center gap-1.5 px-3 py-4 rounded-2xl border-2 text-center transition-all cursor-pointer ${ativo
                           ? 'border-red-500 bg-red-50 text-red-700 shadow-md shadow-red-100'
                           : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
-                      }`}
+                        }`}
                     >
                       <Icon className={`w-5 h-5 ${ativo ? 'text-red-600' : 'text-zinc-400'}`} />
                       <span className={`text-xs font-black ${ativo ? 'text-red-700' : 'text-zinc-700'}`}>{opt.label}</span>
