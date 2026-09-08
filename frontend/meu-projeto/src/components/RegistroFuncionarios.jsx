@@ -510,7 +510,7 @@ export default function RegistroFuncionarios({ onBack }) {
                 <tr className="bg-zinc-100/80 border-b border-zinc-200 text-[11px] font-black uppercase tracking-wider text-zinc-600">
                   <th className="py-4 px-6">Funcionário</th>
                   <th className="py-4 px-4">Função</th>
-                  <th className="py-4 px-4 text-center">Data que Entrou</th>
+                  <th className="py-4 px-4 text-center">Começo dos Pagamentos</th>
                   <th className="py-4 px-4 text-center">Total de Diárias</th>
                   <th className="py-4 px-4 text-right">Total Ganho até Agora</th>
                   <th className="py-4 px-6 text-center">Ações</th>
@@ -796,7 +796,7 @@ export default function RegistroFuncionarios({ onBack }) {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-700 uppercase tracking-wider block">
-                  Data que Entrou na Empresa *
+                  Começo dos Pagamentos *
                 </label>
                 <input
                   type="date"
@@ -975,7 +975,7 @@ export default function RegistroFuncionarios({ onBack }) {
                             {/* Card 1: Data de Entrada */}
                             <div className="bg-blue-50/90 border border-blue-200 rounded-xl p-2.5 text-center">
                               <span className="text-[9px] font-black uppercase tracking-wider text-blue-700 block">
-                                Data que Entrou na Empresa
+                                Começo dos Pagamentos
                               </span>
                               <span className="text-base font-black text-blue-950">
                                 {formatarDataBR(funcionarioRelatorio.data_entrada)}
@@ -1019,7 +1019,7 @@ export default function RegistroFuncionarios({ onBack }) {
                           </div>
 
                           <div className="text-right text-[9px] text-zinc-500">
-                            <p>Data que Entrou: <strong className="text-zinc-800">{formatarDataBR(funcionarioRelatorio.data_entrada)}</strong></p>
+                            <p>Começo dos Pagamentos: <strong className="text-zinc-800">{formatarDataBR(funcionarioRelatorio.data_entrada)}</strong></p>
                             <p className="font-bold text-red-700">Lauda {lauda.numero} de {laudasFuncionario.length}</p>
                           </div>
                         </div>
@@ -1185,7 +1185,7 @@ export default function RegistroFuncionarios({ onBack }) {
                     <div className="grid grid-cols-3 gap-2.5 mt-2.5">
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
                         <span className="text-[8px] font-black uppercase tracking-wider text-blue-700 block">
-                          Data que Entrou
+                          Começo dos Pagamentos
                         </span>
                         <span className="text-sm font-black text-blue-950">
                           {formatarDataBR(funcionarioRelatorio.data_entrada)}

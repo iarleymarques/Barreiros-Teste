@@ -428,7 +428,7 @@ export default function PortalColaborador({ user, onLogout }) {
                       Registro de funcionários
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
-                      Data que entrou, diárias realizadas e relatório completo com total ganho.
+                      Começo dos pagamentos, diárias realizadas e relatório completo com total ganho.
                     </p>
                   </div>
 
