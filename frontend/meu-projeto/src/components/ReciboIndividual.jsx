@@ -102,7 +102,7 @@ function getDiasMes(dataISO) {
 
 // ─── Componente de Impressão ───────────────────────────────────────────────────
 
-function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, empresa, numeroRecibo }) {
+function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, numeroRecibo }) {
   const valorExtenso = numeroPorExtenso(total);
   const dataExt = formatarDataPorExtenso(dataEmissao);
   const totalFormatado = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -113,7 +113,7 @@ function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, em
     const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     const nomeMes = meses[parseInt(mes, 10) - 1] || '';
     if (tipo === 'diaria') {
-      return `diária por serviços prestados nesta data (${formatarDataBR(dataEmissao)})`;
+      return `diária por serviços prestados nesta data`;
     } else if (tipo === 'semanal') {
       const sem = getSemana(dataEmissao || getHojeISO());
       return `diárias por serviços prestados na semana de ${formatarDataBR(sem.inicio)} a ${formatarDataBR(sem.fim)}`;
@@ -121,8 +121,6 @@ function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, em
       return `diárias por serviços prestados no mês de ${nomeMes} de ${ano}`;
     }
   })();
-
-  const diasComValorPositivo = (diasComValor || []).filter(d => (d.valor || 0) > 0);
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-10 sm:p-14 flex flex-col text-zinc-950 font-serif print:p-[40px] print:border-none print:shadow-none print:rounded-none print:min-h-screen">
@@ -155,50 +153,10 @@ function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, em
         <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
           Onde firmo o presente dando plena e total quitação, para os devidos fins e efeitos legais.
         </p>
-
-        {/* ── Discriminação detalhada dos dias (Diária, Semanal ou Mensal) ── */}
-        <div className="my-6 p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-xl print:bg-transparent print:border print:border-zinc-300">
-          <div className="text-xs font-sans font-bold uppercase tracking-wider text-zinc-500 mb-2.5">
-            Discriminação das diárias — {tipo === 'diaria' ? 'Diária' : tipo === 'semanal' ? 'Período Semanal (Seg a Sáb)' : 'Período Mensal'}
-          </div>
-          <table className="w-full text-[13.5px] font-sans" style={{ borderCollapse: 'collapse' }}>
-            <tbody>
-              {diasComValorPositivo.length > 0 ? (
-                diasComValorPositivo.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e4e4e7' }}>
-                    <td style={{ padding: '5px 0' }} className="text-zinc-700">
-                      Dia {formatarDataBR(item.data)}
-                    </td>
-                    <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: '600' }} className="text-zinc-900">
-                      R$ {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr style={{ borderBottom: '1px solid #e4e4e7' }}>
-                  <td style={{ padding: '5px 0' }} className="text-zinc-700">
-                    Dia {formatarDataBR(dataEmissao)}
-                  </td>
-                  <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: '600' }} className="text-zinc-900">
-                    R$ {totalFormatado}
-                  </td>
-                </tr>
-              )}
-              <tr style={{ borderTop: '2px solid #18181b' }}>
-                <td style={{ padding: '8px 0', fontWeight: '900', fontSize: '14px' }}>
-                  Total:
-                </td>
-                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: '900', fontSize: '15px' }} className="text-zinc-950">
-                  R$ {totalFormatado}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
 
-      {/* ── Rodapé: Data por extenso, linha de assinatura, Nome e CPF ── */}
-      <div className="mt-12 space-y-8">
+      {/* ── Rodapé: Data por extenso, linha de assinatura, Nome e PIX ── */}
+      <div className="mt-16 space-y-10">
         <div className="text-center text-[15px] font-serif text-zinc-900">
           {dataExt}.
         </div>
@@ -208,8 +166,13 @@ function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, em
           <div className="font-bold text-base font-sans uppercase tracking-tight text-zinc-950">
             {nome || '________________________________________'}
           </div>
-          {cpf && (
-            <div className="text-sm font-sans font-medium text-zinc-700">
+          {pix && (
+            <div className="text-sm font-sans font-semibold text-zinc-800">
+              PIX: {pix}
+            </div>
+          )}
+          {cpf && cpf !== pix && (
+            <div className="text-sm font-sans font-medium text-zinc-600">
               CPF: {cpf}
             </div>
           )}
@@ -227,6 +190,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   const [form, setForm] = useState({
     nome: '',
     cpf: '',
+    pix: '',
     valorUnitario: 120.0,
     dataRef: getHojeISO(),
     empresa: 'DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS LTDA',
@@ -251,7 +215,8 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
       setForm(prev => ({
         ...prev,
         nome: diaristaInicial.nome || '',
-        cpf: diaristaInicial.tipoPix === 'cpf' ? diaristaInicial.pix : '',
+        cpf: diaristaInicial.tipoPix === 'cpf' ? diaristaInicial.pix : (diaristaInicial.cpf || ''),
+        pix: diaristaInicial.pix || diaristaInicial.chavePix || '',
         valorUnitario: parseFloat(diaristaInicial.valor) || 120.0,
         dataRef: diaristaInicial.data || getHojeISO(),
       }));
@@ -348,7 +313,8 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
       setForm(prev => ({
         ...prev,
         nome: sel.nome || '',
-        cpf: sel.tipoPix === 'cpf' ? sel.pix : prev.cpf,
+        cpf: sel.tipoPix === 'cpf' ? sel.pix : (sel.cpf || prev.cpf),
+        pix: sel.pix || sel.chavePix || prev.pix || '',
         valorUnitario: parseFloat(sel.valor) || 120.0,
         dataRef: sel.data || prev.dataRef,
       }));
@@ -559,7 +525,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                 />
               </div>
 
-              {/* CPF + Data de Referência */}
+              {/* CPF e PIX */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">CPF</label>
@@ -573,17 +539,30 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                    {tipoRecibo === 'diaria' ? 'Data' : tipoRecibo === 'semanal' ? 'Qualquer dia da Semana' : 'Qualquer dia do Mês'}
-                  </label>
+                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">Chave PIX</label>
                   <input
-                    type="date"
-                    name="dataRef"
-                    value={form.dataRef}
+                    type="text"
+                    name="pix"
+                    value={form.pix}
                     onChange={handleChange}
+                    placeholder="Chave PIX ou telefone"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
                   />
                 </div>
+              </div>
+
+              {/* Data de Referência */}
+              <div>
+                <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
+                  {tipoRecibo === 'diaria' ? 'Data' : tipoRecibo === 'semanal' ? 'Qualquer dia da Semana' : 'Qualquer dia do Mês'}
+                </label>
+                <input
+                  type="date"
+                  name="dataRef"
+                  value={form.dataRef}
+                  onChange={handleChange}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white"
+                />
               </div>
 
               {/* Valor unitário */}
@@ -643,7 +622,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
             tipo={tipoRecibo}
             nome={form.nome}
             cpf={form.cpf}
-            diasComValor={diasParaExibir}
+            pix={form.pix}
             total={totalExibido}
             dataEmissao={form.dataRef}
             empresa={form.empresa}
