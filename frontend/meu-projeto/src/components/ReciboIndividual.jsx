@@ -105,89 +105,114 @@ function getDiasMes(dataISO) {
 function ReciboImpressao({ tipo, nome, cpf, diasComValor, total, dataEmissao, empresa, numeroRecibo }) {
   const valorExtenso = numeroPorExtenso(total);
   const dataExt = formatarDataPorExtenso(dataEmissao);
-
   const totalFormatado = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const labelTipo = tipo === 'diaria' ? 'Diária' : tipo === 'semanal' ? 'Semanal' : 'Mensal';
+  // Texto do referente adaptado por tipo
+  const textoReferente = (() => {
+    const [ano, mes] = (dataEmissao || getHojeISO()).split('-');
+    const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const nomeMes = meses[parseInt(mes, 10) - 1] || '';
+    if (tipo === 'diaria') {
+      return `diária por serviços prestados nesta data (${formatarDataBR(dataEmissao)})`;
+    } else if (tipo === 'semanal') {
+      const sem = getSemana(dataEmissao || getHojeISO());
+      return `diárias por serviços prestados na semana de ${formatarDataBR(sem.inicio)} a ${formatarDataBR(sem.fim)}`;
+    } else {
+      return `diárias por serviços prestados no mês de ${nomeMes} de ${ano}`;
+    }
+  })();
+
+  const diasComValorPositivo = (diasComValor || []).filter(d => (d.valor || 0) > 0);
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-8 sm:p-12 flex flex-col justify-between text-zinc-950 font-serif relative overflow-hidden print:p-0 print:border-none print:shadow-none print:rounded-none">
-      
-      {/* Cabeçalho */}
-      <div>
-        <div className="flex items-start justify-between pb-6 border-b-2 border-zinc-900">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-3xl font-bold tracking-normal font-serif">Recibo</h1>
-              <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-300 text-zinc-700 font-sans text-xs font-black uppercase tracking-wider">
-                {labelTipo}
-              </span>
-              {numeroRecibo && (
-                <span className="px-2.5 py-0.5 rounded-md bg-zinc-100 border border-zinc-300 text-zinc-800 font-sans text-xs font-black tracking-wider uppercase">
-                  Nº {numeroRecibo}
-                </span>
-              )}
-            </div>
-            <p className="text-xs font-sans text-zinc-500 font-medium">{empresa}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-black font-sans tracking-tight">R$ {totalFormatado}</div>
-            <div className="text-xs font-sans text-zinc-500 font-semibold mt-0.5">{valorExtenso}</div>
-          </div>
-        </div>
+    <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-10 sm:p-14 flex flex-col text-zinc-950 font-serif print:p-[40px] print:border-none print:shadow-none print:rounded-none print:min-h-screen">
 
-        {/* Lista de dias */}
-        <div className="mt-6">
-          <table className="w-full text-sm font-sans border-collapse">
-            <thead>
-              <tr className="border-b border-zinc-200">
-                <th className="text-left py-1.5 font-bold text-zinc-700 text-xs uppercase tracking-wide">Data</th>
-                <th className="text-right py-1.5 font-bold text-zinc-700 text-xs uppercase tracking-wide">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {diasComValor.map((item, idx) => (
-                <tr key={idx} className="border-b border-zinc-100">
-                  <td className="py-1.5 text-zinc-800">Dia {formatarDataBR(item.data)}</td>
-                  <td className="py-1.5 text-right font-semibold text-zinc-900">
-                    {item.valor > 0
-                      ? `R$ ${item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                      : <span className="text-zinc-400 text-xs">—</span>
-                    }
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-zinc-900">
-                <td className="pt-3 pb-1 font-black text-base">Total:</td>
-                <td className="pt-3 pb-1 text-right font-black text-base">R$ {totalFormatado}</td>
-              </tr>
-            </tfoot>
-          </table>
+      {/* ── Cabeçalho: "Recibo" + valor (Idêntico ao documento físico) ── */}
+      <div className="flex items-baseline justify-between mb-8 border-b border-zinc-200 pb-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold font-serif tracking-tight text-zinc-900">Recibo</h1>
+          {numeroRecibo && (
+            <span className="text-xs font-sans font-black text-zinc-500 uppercase tracking-wider bg-zinc-100 px-2 py-0.5 rounded border border-zinc-300">
+              Nº {numeroRecibo}
+            </span>
+          )}
         </div>
-
-        {/* Texto jurídico */}
-        <div className="mt-6 text-sm leading-relaxed text-justify font-serif text-zinc-800">
-          <p className="indent-6">
-            Recebi da <strong className="font-extrabold uppercase tracking-wide">{empresa}</strong> a importância de{' '}
-            <strong>R$ {totalFormatado} ({valorExtenso})</strong> referente ao pagamento de diárias trabalhadas, conforme
-            relação acima.
-          </p>
-          <p className="mt-2 indent-6">
-            Onde firmo o presente dando plena, geral e irrevogável quitação do valor recebido, para os devidos fins e efeitos legais.
-          </p>
+        <div className="text-3xl font-black font-sans tracking-tight text-zinc-900">
+          R$ {totalFormatado}
         </div>
       </div>
 
-      {/* Rodapé: data, assinatura, nome, CPF */}
-      <div className="mt-10 space-y-8">
-        <div className="text-center text-base font-serif">{dataExt}</div>
+      {/* ── Corpo principal com texto formal ── */}
+      <div className="flex-grow space-y-6">
+        <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
+          Recebi da{' '}
+          <strong className="font-extrabold uppercase tracking-wide text-zinc-950">
+            {empresa}
+          </strong>{' '}
+          a importância de <strong>R$ {totalFormatado} ({valorExtenso})</strong> referente ao pagamento de {textoReferente}.
+        </p>
 
-        <div className="flex flex-col items-center justify-center gap-1">
-          <div className="w-72 sm:w-80 border-t border-zinc-900" />
-          <div className="font-bold text-base font-sans uppercase tracking-tight">{nome || '___________________________'}</div>
-          {cpf && <div className="text-sm font-sans text-zinc-600">CPF: {cpf}</div>}
+        <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
+          Onde firmo o presente dando plena e total quitação, para os devidos fins e efeitos legais.
+        </p>
+
+        {/* ── Discriminação detalhada dos dias (Diária, Semanal ou Mensal) ── */}
+        <div className="my-6 p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-xl print:bg-transparent print:border print:border-zinc-300">
+          <div className="text-xs font-sans font-bold uppercase tracking-wider text-zinc-500 mb-2.5">
+            Discriminação das diárias — {tipo === 'diaria' ? 'Diária' : tipo === 'semanal' ? 'Período Semanal (Seg a Sáb)' : 'Período Mensal'}
+          </div>
+          <table className="w-full text-[13.5px] font-sans" style={{ borderCollapse: 'collapse' }}>
+            <tbody>
+              {diasComValorPositivo.length > 0 ? (
+                diasComValorPositivo.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e4e4e7' }}>
+                    <td style={{ padding: '5px 0' }} className="text-zinc-700">
+                      Dia {formatarDataBR(item.data)}
+                    </td>
+                    <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: '600' }} className="text-zinc-900">
+                      R$ {Number(item.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr style={{ borderBottom: '1px solid #e4e4e7' }}>
+                  <td style={{ padding: '5px 0' }} className="text-zinc-700">
+                    Dia {formatarDataBR(dataEmissao)}
+                  </td>
+                  <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: '600' }} className="text-zinc-900">
+                    R$ {totalFormatado}
+                  </td>
+                </tr>
+              )}
+              <tr style={{ borderTop: '2px solid #18181b' }}>
+                <td style={{ padding: '8px 0', fontWeight: '900', fontSize: '14px' }}>
+                  Total:
+                </td>
+                <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: '900', fontSize: '15px' }} className="text-zinc-950">
+                  R$ {totalFormatado}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Rodapé: Data por extenso, linha de assinatura, Nome e CPF ── */}
+      <div className="mt-12 space-y-8">
+        <div className="text-center text-[15px] font-serif text-zinc-900">
+          {dataExt}.
+        </div>
+
+        <div className="flex flex-col items-center justify-center gap-1.5 pt-4">
+          <div className="w-80 sm:w-96 border-t border-zinc-900" />
+          <div className="font-bold text-base font-sans uppercase tracking-tight text-zinc-950">
+            {nome || '________________________________________'}
+          </div>
+          {cpf && (
+            <div className="text-sm font-sans font-medium text-zinc-700">
+              CPF: {cpf}
+            </div>
+          )}
         </div>
       </div>
     </div>
