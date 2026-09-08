@@ -119,7 +119,7 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
   })();
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-10 sm:p-14 flex flex-col text-zinc-950 font-serif print:p-[40px] print:border-none print:shadow-none print:rounded-none print:min-h-screen">
+    <div className="bg-white rounded-3xl shadow-2xl border border-zinc-300 p-10 sm:p-14 text-zinc-950 font-serif print:p-[30px] print:border-none print:shadow-none print:rounded-none">
 
       {/* ── Cabeçalho: "Recibo" + valor (Idêntico ao documento físico) ── */}
       <div className="flex items-baseline justify-between mb-8 border-b border-zinc-200 pb-4">
@@ -137,7 +137,7 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
       </div>
 
       {/* ── Corpo principal com texto formal ── */}
-      <div className="flex-grow space-y-6">
+      <div className="space-y-6">
         <p className="text-[15px] sm:text-[16px] leading-relaxed text-justify indent-10 text-zinc-900">
           Recebi da{' '}
           <strong className="font-extrabold uppercase tracking-wide text-zinc-950">
@@ -152,12 +152,12 @@ function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, nu
       </div>
 
       {/* ── Rodapé: Data por extenso, linha de assinatura, Nome e PIX ── */}
-      <div className="mt-16 space-y-10">
+      <div className="mt-10 sm:mt-12 space-y-6">
         <div className="text-center text-[15px] font-serif text-zinc-900">
           {dataExt}.
         </div>
 
-        <div className="flex flex-col items-center justify-center gap-1.5 pt-4">
+        <div className="flex flex-col items-center justify-center gap-1.5 pt-2">
           <div className="w-80 sm:w-96 border-t border-zinc-900" />
           <div className="font-bold text-base font-sans uppercase tracking-tight text-zinc-950">
             {nome || '________________________________________'}
