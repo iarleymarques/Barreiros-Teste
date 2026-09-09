@@ -48,6 +48,37 @@ function isValidCPF(cpf) {
   return true;
 }
 
+function isValidCNPJ(cnpj) {
+  const clean = cnpj.replace(/\D/g, '');
+  if (clean.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(clean)) return false;
+
+  let length = clean.length - 2;
+  let numbers = clean.substring(0, length);
+  const digits = clean.substring(length);
+  let sum = 0;
+  let pos = length - 7;
+  for (let i = length; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(length - i), 10) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(0), 10)) return false;
+
+  length = length + 1;
+  numbers = clean.substring(0, length);
+  sum = 0;
+  pos = length - 7;
+  for (let i = length; i >= 1; i--) {
+    sum += parseInt(numbers.charAt(length - i), 10) * pos--;
+    if (pos < 2) pos = 9;
+  }
+  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+  if (result !== parseInt(digits.charAt(1), 10)) return false;
+
+  return true;
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -65,15 +96,39 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const pdfRef = useRef(null);
 
-  // Form State com todas as informações possíveis
+  // Form State com suporte a Pessoa Física e Pessoa Jurídica (Corporativo)
   const [formData, setFormData] = useState({
-    // Etapa 1: Dados Pessoais
+    tipoPessoa: 'fisica', // 'fisica' | 'juridica'
+
+    // Etapa 1: Dados Pessoais (Pessoa Física)
     nome: '',
     cpf: '',
     email: userEmail || '',
     telefone: '',
     dataNascimento: '',
     rg: '',
+
+    // Etapa 1: Dados Empresariais (Pessoa Jurídica / Alvará de Funcionamento)
+    razaoSocial: '',
+    nomeFantasia: '',
+    cnpj: '',
+    enderecoPJ: '',
+    inscricaoMunicipal: '',
+    inscricaoImobiliaria: '',
+    inscricaoEstadual: '',
+    porte: 'Microempresa (ME EPP)',
+    horarioFuncionamento: '07:00 - 17:00',
+    socioAdministrador: '',
+    categoriaAtuacao: 'Prestação de Serviços',
+    regimeTributacao: 'ISENÇÃO',
+    tipoAlvara: 'RENOVAÇÃO',
+    numeroAlvara: '330/2025',
+    validadeAlvara: 'Sexta-feira, 11 de Setembro de 2026',
+    dataEmissaoAlvara: 'Quinta-feira, 11 de Setembro de 2025',
+    codigoValidacao: 'FA6A094467',
+    atividadePrincipal: '',
+    atividadeSecundaria: '',
+    areaInstalacoes: '12m²',
 
     // Etapa 2: Endereço
     cep: '',
@@ -138,7 +193,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       }
       await new Promise((resolve) => setTimeout(resolve, 150));
 
-      // Captura via html2canvas com renderização em layout A4 padrão de 820px
+      // Captura via html2canvas com renderização em layout A4 padrão de 800px
       const canvas = await html2canvas(element, {
         scale: 2.5, // Alta definição (nítido para impressão)
         useCORS: true,
@@ -146,15 +201,18 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         backgroundColor: '#ffffff',
         windowWidth: 1024,
         onclone: (clonedDoc, clonedEl) => {
-          // Padroniza o elemento para formato de página A4 sem cortes e sem distorção
-          clonedEl.style.width = '820px';
-          clonedEl.style.maxWidth = '820px';
-          clonedEl.style.minWidth = '820px';
+          // Padroniza o elemento para formato de página A4 sem cortes
+          clonedEl.style.width = '800px';
+          clonedEl.style.maxWidth = '800px';
+          clonedEl.style.minWidth = '800px';
           clonedEl.style.margin = '0 auto';
           clonedEl.style.boxShadow = 'none';
           clonedEl.style.borderRadius = '0px';
           clonedEl.style.border = 'none';
-          clonedEl.style.padding = '24px 28px';
+          clonedEl.style.padding = '20px 22px';
+          // Remove height constraints — deixa o conteúdo determinar a altura natural
+          clonedEl.style.height = 'auto';
+          clonedEl.style.minHeight = 'unset';
         }
       });
 
@@ -169,24 +227,34 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
       const pdfWidth = 210; // A4 largura total em mm
       const pdfHeight = 297; // A4 altura total em mm
-      const marginX = 10; // 10mm de margem horizontal
-      const marginY = 10; // 10mm de margem vertical
-      const printableWidth = pdfWidth - marginX * 2; // 190mm de largura útil
-      const printableHeight = (canvas.height * printableWidth) / canvas.width;
+      const marginX = 8;
+      const marginY = 8;
+      const printableWidth = pdfWidth - marginX * 2;   // 194mm
+      const printableHeight = pdfHeight - marginY * 2; // 281mm
 
-      // Se couber em 1 página A4 com margens
-      if (printableHeight <= pdfHeight - marginY * 2) {
-        pdf.addImage(imgData, 'JPEG', marginX, marginY, printableWidth, printableHeight, undefined, 'FAST');
+      // Sempre escala a imagem para caber em 1 página inteira — sem cortes, sem segunda página
+      pdf.addImage(imgData, 'JPEG', marginX, marginY, printableWidth, printableHeight, undefined, 'FAST');
+
+      if (false) { // bloco legado PF nunca ativado para PJ
       } else {
-        const maxAvailableHeight = pdfHeight - marginY * 2;
-        const scaleFactor = maxAvailableHeight / printableHeight;
-        
-        // Se ultrapassar levemente, ajusta proporcionalmente para 1 página mantendo perfeita leitura
-        if (scaleFactor >= 0.82) {
-          const scaledW = printableWidth * scaleFactor;
-          const leftM = (pdfWidth - scaledW) / 2;
-          pdf.addImage(imgData, 'JPEG', leftM, marginY, scaledW, maxAvailableHeight, undefined, 'FAST');
+        const marginX = 10; // 10mm de margem horizontal
+        const marginY = 10; // 10mm de margem vertical
+        const printableWidth = pdfWidth - marginX * 2; // 190mm de largura útil
+        const printableHeight = (canvas.height * printableWidth) / canvas.width;
+
+        // Se couber em 1 página A4 com margens
+        if (printableHeight <= pdfHeight - marginY * 2) {
+          pdf.addImage(imgData, 'JPEG', marginX, marginY, printableWidth, printableHeight, undefined, 'FAST');
         } else {
+          const maxAvailableHeight = pdfHeight - marginY * 2;
+          const scaleFactor = maxAvailableHeight / printableHeight;
+          
+          // Se ultrapassar levemente, ajusta proporcionalmente para 1 página mantendo perfeita leitura
+          if (scaleFactor >= 0.82) {
+            const scaledW = printableWidth * scaleFactor;
+            const leftM = (pdfWidth - scaledW) / 2;
+            pdf.addImage(imgData, 'JPEG', leftM, marginY, scaledW, maxAvailableHeight, undefined, 'FAST');
+          } else {
           // Se for extenso, divide em páginas A4 sem cortar texto
           const pageCanvasHeight = (canvas.width * maxAvailableHeight) / printableWidth;
           let currentY = 0;
@@ -226,8 +294,9 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           }
         }
       }
+    }
 
-      const nomeArquivo = `Ficha_Cadastral_${(formData.nome || 'Colaborador').replace(/\s+/g, '_')}_${protocolo}.pdf`;
+      const nomeArquivo = `Ficha_Cadastral_${((formData.tipoPessoa === 'juridica' ? formData.razaoSocial : formData.nome) || 'Cadastro').replace(/[^a-zA-Z0-9]/g, '_')}_${protocolo}.pdf`;
       
       // Download direto via Blob padrão
       const blob = pdf.output('blob');
@@ -254,6 +323,15 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     if (v.length <= 6) return `${v.slice(0, 3)}.${v.slice(3)}`;
     if (v.length <= 9) return `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6)}`;
     return `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6, 9)}-${v.slice(9, 11)}`;
+  }
+
+  function formatCNPJ(val) {
+    const v = val.replace(/\D/g, '').slice(0, 14);
+    if (v.length <= 2) return v;
+    if (v.length <= 5) return `${v.slice(0, 2)}.${v.slice(2)}`;
+    if (v.length <= 8) return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5)}`;
+    if (v.length <= 12) return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8)}`;
+    return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8, 12)}-${v.slice(12, 14)}`;
   }
 
   function formatPhone(val) {
@@ -296,6 +374,20 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       }
     }
 
+    if (field === 'razaoSocial') {
+      if (!value || !value.trim()) {
+        errorMsg = 'Razão Social é obrigatória';
+      }
+    }
+
+    if (field === 'cnpj') {
+      if (!value) {
+        errorMsg = 'CNPJ é obrigatório';
+      } else if (!isValidCNPJ(value)) {
+        errorMsg = 'CNPJ inválido. Verifique os números digitados.';
+      }
+    }
+
     if (field === 'rg') {
       if (!value.trim()) {
         errorMsg = 'RG / Órgão Emissor é obrigatório';
@@ -304,14 +396,12 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
     if (field === 'email') {
       if (value && !isValidEmail(value)) {
-        errorMsg = 'Por favor, informe um e-mail válido (ex: nome@empresa.com)';
+        errorMsg = 'Por favor, informe um e-mail válido (ex: contato@empresa.com)';
       }
     }
 
     if (field === 'telefone') {
-      if (!value) {
-        errorMsg = 'Telefone é obrigatório';
-      } else if (!isValidPhone(value)) {
+      if (value && !isValidPhone(value)) {
         errorMsg = 'Informe um telefone com DDD válido (10 ou 11 dígitos)';
       }
     }
@@ -423,6 +513,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   function handleChange(field, value) {
     let formatted = value;
     if (field === 'cpf') formatted = formatCPF(value);
+    if (field === 'cnpj') formatted = formatCNPJ(value);
     if (field === 'telefone') formatted = formatPhone(value);
     if (field === 'rg') formatted = formatRG(value);
     if (field === 'agencia') formatted = formatAgencia(value);
@@ -455,36 +546,78 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     }
   }
 
+  function handleTipoPessoaChange(tipo) {
+    setCurrentStep(1);
+    setMaxStepReached(1);
+    setFormData((prev) => ({
+      ...prev,
+      tipoPessoa: tipo,
+      // Se for PJ, sugere chave PIX tipo CNPJ caso esteja em CPF
+      tipoPix: tipo === 'juridica' ? 'CNPJ' : (prev.tipoPix === 'CNPJ' ? 'CPF' : prev.tipoPix)
+    }));
+    // Limpa erros específicos
+    setErrors((prev) => ({
+      ...prev,
+      nome: '',
+      cpf: '',
+      rg: '',
+      razaoSocial: '',
+      cnpj: '',
+      telefone: ''
+    }));
+  }
+
   function validateCurrentStep() {
     let valid = true;
     const newErrors = {};
     const newTouched = { ...touched };
 
     if (currentStep === 1) {
-      if (!validateField('nome', formData.nome)) {
-        newErrors.nome = 'Nome completo é obrigatório';
-        valid = false;
+      if (formData.tipoPessoa === 'fisica') {
+        if (!validateField('nome', formData.nome)) {
+          newErrors.nome = 'Nome completo é obrigatório';
+          valid = false;
+        }
+        if (!validateField('cpf', formData.cpf)) {
+          newErrors.cpf = !formData.cpf ? 'CPF é obrigatório' : 'CPF inválido';
+          valid = false;
+        }
+        if (!validateField('rg', formData.rg)) {
+          newErrors.rg = 'RG / Órgão Emissor é obrigatório';
+          valid = false;
+        }
+        if (formData.email && !validateField('email', formData.email)) {
+          newErrors.email = 'E-mail inválido';
+          valid = false;
+        }
+        if (formData.telefone && !validateField('telefone', formData.telefone)) {
+          newErrors.telefone = 'Telefone com formato incompleto';
+          valid = false;
+        }
+        newTouched.nome = true;
+        newTouched.cpf = true;
+        newTouched.rg = true;
+      } else {
+        // Pessoa Jurídica
+        if (!validateField('razaoSocial', formData.razaoSocial)) {
+          newErrors.razaoSocial = 'Razão Social é obrigatória';
+          valid = false;
+        }
+        if (!validateField('cnpj', formData.cnpj)) {
+          newErrors.cnpj = !formData.cnpj ? 'CNPJ é obrigatório' : 'CNPJ inválido';
+          valid = false;
+        }
+        if (formData.telefone && !validateField('telefone', formData.telefone)) {
+          newErrors.telefone = 'Telefone corporativo incompleto';
+          valid = false;
+        }
+        if (formData.email && !validateField('email', formData.email)) {
+          newErrors.email = 'E-mail corporativo inválido';
+          valid = false;
+        }
+        newTouched.razaoSocial = true;
+        newTouched.cnpj = true;
       }
-      if (!validateField('cpf', formData.cpf)) {
-        newErrors.cpf = !formData.cpf ? 'CPF é obrigatório' : 'CPF inválido';
-        valid = false;
-      }
-      if (!validateField('rg', formData.rg)) {
-        newErrors.rg = 'RG / Órgão Emissor é obrigatório';
-        valid = false;
-      }
-      if (formData.email && !validateField('email', formData.email)) {
-        newErrors.email = 'E-mail inválido';
-        valid = false;
-      }
-      if (!validateField('telefone', formData.telefone)) {
-        newErrors.telefone = !formData.telefone ? 'Telefone é obrigatório' : 'Telefone incompleto';
-        valid = false;
-      }
-      newTouched.nome = true;
-      newTouched.cpf = true;
-      newTouched.rg = true;
-      newTouched.telefone = true;
     } else if (currentStep === 2) {
       if (!validateField('cep', formData.cep)) {
         newErrors.cep = 'CEP obrigatório';
@@ -547,22 +680,47 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     return valid;
   }
 
+  const steps = formData.tipoPessoa === 'juridica'
+    ? [
+        { id: 1, title: 'Identificação da Empresa (PJ)', icon: Building2 }
+      ]
+    : [
+        { id: 1, title: 'Dados pessoais', icon: User },
+        { id: 2, title: 'Endereço', icon: MapPin },
+        { id: 3, title: 'Dados bancários', icon: CreditCard },
+        { id: 4, title: 'Profissionais', icon: Briefcase }
+      ];
+
   async function handleNext(e) {
     e.preventDefault();
     if (!validateCurrentStep()) {
       return;
     }
 
-    if (currentStep < 4) {
+    if (currentStep < steps.length) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
       setMaxStepReached((prev) => Math.max(prev, nextStep));
     } else {
       try {
         await createColaboradorApi({
-          nome_completo: formData.nome,
-          cpf: formData.cpf,
-          rg: formData.rg,
+          tipo_pessoa: formData.tipoPessoa,
+          razao_social: formData.razaoSocial,
+          nome_fantasia: formData.nomeFantasia,
+          cnpj: formData.cnpj,
+          inscricao_municipal: formData.inscricaoMunicipal,
+          inscricao_estadual: formData.inscricaoEstadual,
+          porte: formData.porte,
+          horario_funcionamento: formData.horarioFuncionamento,
+          socio_administrador: formData.socioAdministrador,
+          categoria_atuacao: formData.categoriaAtuacao,
+          regime_tributacao: formData.regimeTributacao,
+          atividade_principal: formData.atividadePrincipal,
+          atividade_secundaria: formData.atividadeSecundaria,
+          area_instalacoes: formData.areaInstalacoes,
+          nome_completo: formData.tipoPessoa === 'juridica' ? formData.razaoSocial : formData.nome,
+          cpf: formData.tipoPessoa === 'juridica' ? formData.cnpj : formData.cpf,
+          rg: formData.tipoPessoa === 'juridica' ? (formData.inscricaoEstadual || 'ISENTO') : formData.rg,
           data_nascimento: formData.dataNascimento,
           email: formData.email,
           telefone: formData.telefone,
@@ -610,13 +768,6 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       }
     }
   }
-
-  const steps = [
-    { id: 1, title: 'Dados pessoais', icon: User },
-    { id: 2, title: 'Endereço', icon: MapPin },
-    { id: 3, title: 'Dados bancários', icon: CreditCard },
-    { id: 4, title: 'Profissionais', icon: Briefcase }
-  ];
 
   return (
     <div className="w-full space-y-4">
@@ -697,211 +848,476 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           {/* ============================================================ */}
           {/* DOCUMENTO OFICIAL A4 PARA VISUALIZAÇÃO E IMPRESSÃO (PDF)     */}
           {/* ============================================================ */}
-          <div ref={pdfRef} data-pdf-root className="print-document bg-white text-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-200 shadow-xl space-y-4 max-w-4xl mx-auto">
-            
-            {/* CABEÇALHO EXECUTIVO OFICIAL */}
-            <div className="border-b-2 border-red-600 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <Logo className="h-12 sm:h-14 shrink-0" />
-                <div className="border-l border-zinc-300 pl-3">
-                  <h1 className="text-base sm:text-lg font-black text-zinc-950 uppercase tracking-tight leading-tight">
-                    Distribuidora Irmãos Barreiro de Bebidas
-                  </h1>
-                  <p className="text-xs text-zinc-500 font-medium">
-                    Comprovante Oficial de Cadastro e Alocação Operacional
+          {formData.tipoPessoa === 'juridica' ? (
+            /* ========================================================== */
+            /* LAYOUT EXATO DO ALVARÁ DE FUNCIONAMENTO (IMAGEM 2)         */
+            /* ========================================================== */
+            <div
+              ref={pdfRef}
+              data-pdf-root
+              className="print-document bg-white text-black p-4 border-2 border-black max-w-4xl mx-auto font-sans select-none shadow-2xl leading-tight flex flex-col"
+              style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '9px' }}
+            >
+              <div className="space-y-1.5 flex flex-col">
+                {/* TOPO: LOGO DISTRIBUIDORA / CABEÇALHO CORPORATIVO / QR CODE */}
+                <div className="flex items-center justify-between gap-2 pb-1.5 border-b-2 border-black">
+                  {/* Logo da Distribuidora Esquerda */}
+                  <div className="w-20 shrink-0 flex items-center justify-start">
+                    <Logo className="h-10 w-auto object-contain" />
+                  </div>
+
+                  {/* Textos Centrais Corporativos */}
+                  <div className="flex-1 text-center text-black">
+                    <h3 className="text-[10px] font-bold tracking-wider uppercase text-black leading-tight">
+                      DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS
+                    </h3>
+                    <h2 className="text-[11px] font-black tracking-tight uppercase text-black leading-tight">
+                      DEPARTAMENTO DE CADASTRO CORPORATIVO
+                    </h2>
+                    <h4 className="text-[9px] font-bold uppercase tracking-wider text-black leading-tight">
+                      REGISTRO DE PRESTADOR & FORNECEDOR (PESSOA JURÍDICA)
+                    </h4>
+                  </div>
+
+                  {/* QR Code Direita */}
+                  <div className="w-16 shrink-0 flex flex-col items-center justify-center">
+                    <div className="p-0.5 border-2 border-black bg-white">
+                      <QrCode className="w-11 h-11 text-black stroke-[1.5]" />
+                    </div>
+                    <span className="text-[6px] font-mono font-bold mt-0.5 text-black">
+                      {formData.codigoValidacao || protocolo || 'FA6A094467'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* TÍTULO CENTRAL DESTACADO */}
+                <div className="border-t-2 border-b-2 border-black py-1 text-center font-black">
+                  <div className="text-[13px] tracking-wider uppercase font-black text-black leading-tight">
+                    CADASTRO DE PESSOA JURÍDICA
+                  </div>
+                  <div className="text-[11px] font-black tracking-widest text-black leading-tight">
+                    REGISTRO Nº {formData.numeroAlvara || protocolo}
+                  </div>
+                </div>
+
+                {/* TABELA PRINCIPAL DE DADOS */}
+                <table className="w-full border-collapse border border-black text-[9px] text-black">
+                  <tbody>
+                    {/* Razão Social */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Razão Social</span>
+                        <span className="block text-[10px] font-black uppercase text-black">
+                          {formData.razaoSocial || 'EQUILIBRIUM SERVICOS DE DEDETIZACAO LTDA'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Nome Fantasia */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Nome Fantasia</span>
+                        <span className="block text-[10px] font-black uppercase text-black">
+                          {formData.nomeFantasia || 'EQUILIBRIUM SOLUCOES AMBIENTAIS'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Endereço */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Endereço Comercial</span>
+                        <span className="block text-[9px] font-bold uppercase text-black">
+                          {formData.enderecoPJ || (formData.logradouro ? `${formData.logradouro}, ${formData.numero || 'S/N'}, ${formData.bairro || ''} ${formData.cidade ? `- ${formData.cidade}` : ''} ${formData.estado ? `- ${formData.estado}` : ''}` : 'ENDEREÇO DA SEDE EMPRESARIAL')}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Linha com 4 Colunas: CNPJ, Área, Porte, Horário */}
+                    <tr>
+                      <td className="border border-black px-2 py-1 w-[26%] bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">CNPJ</span>
+                        <span className="block text-[9px] font-bold font-mono text-black">
+                          {formData.cnpj || '13.020.344/0001-04'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 w-[14%] bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Área</span>
+                        <span className="block text-[9px] font-bold text-black">
+                          {formData.areaInstalacoes || '12m²'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 w-[35%] bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Porte</span>
+                        <span className="block text-[9px] font-bold text-black">
+                          {formData.porte || 'Microempresa (ME EPP)'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 w-[25%] bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Horário Func.</span>
+                        <span className="block text-[9px] font-bold font-mono text-black">
+                          {formData.horarioFuncionamento || '07:00 - 17:00'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Linha com 4 Colunas: Inscrições, Uso Categoria, Tipo de Tributação */}
+                    <tr>
+                      <td className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Insc. Municipal</span>
+                        <span className="block text-[9px] font-bold font-mono text-black">
+                          {formData.inscricaoMunicipal || '43133'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Insc. Estadual / Imob.</span>
+                        <span className="block text-[9px] font-bold font-mono text-black">
+                          {formData.inscricaoImobiliaria || formData.inscricaoEstadual || '11954'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Uso Categoria</span>
+                        <span className="block text-[9px] font-bold text-black">
+                          {formData.categoriaAtuacao || 'Prestação de Serviços'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Regime Tributário</span>
+                        <span className="block text-[9px] font-bold uppercase text-black">
+                          {formData.regimeTributacao || 'SIMPLES NACIONAL'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Sócio Administrador & Tipo de Registro */}
+                    <tr>
+                      <td colSpan={3} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Sócio Administrador</span>
+                        <span className="block text-[9px] font-bold text-black">
+                          {formData.socioAdministrador || '-'}
+                        </span>
+                      </td>
+                      <td className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Tipo de Registro</span>
+                        <span className="block text-[9.5px] font-black uppercase text-black">
+                          {formData.tipoAlvara || 'HOMOLOGAÇÃO CORPORATIVA'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Aviso de conformidade corporativa */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-0.5 text-center font-bold text-[8px] text-black bg-white">
+                        A regularidade deste cadastro corporativo está condicionada à conformidade documental e operacional junto à Distribuidora Irmãos Barreiro.
+                      </td>
+                    </tr>
+
+                    {/* Bloco Central – Marca d'água + Orientações */}
+                    <tr>
+                      <td colSpan={4} className="border border-black p-0 bg-white">
+                        <div className="relative py-3 px-3 text-center overflow-hidden">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-[0.07] select-none">
+                            <div className="text-2xl font-black tracking-widest text-zinc-900 uppercase">
+                              DISTRIBUIDORA IRMÃOS BARREIRO
+                            </div>
+                            <div className="text-xs font-bold text-zinc-700 italic mt-0.5">
+                              Departamento de Cadastro & Homologação
+                            </div>
+                          </div>
+                          <div className="relative z-10 space-y-0.5 text-[8.5px] font-bold text-black leading-snug">
+                            <div className="font-black text-[9.5px] uppercase text-black mb-1 tracking-wide">
+                              COMUNICAR À DISTRIBUIDORA QUANDO:
+                            </div>
+                            <div>1 - Mudança de Endereço / Sede.</div>
+                            <div>2 - Alteração de Porte ou Estrutura.</div>
+                            <div>3 - Mudança de Atividade ou Escopo.</div>
+                            <div>4 - Alteração na Razão Social.</div>
+                            <div>5 - Alteração no Nome Fantasia.</div>
+                            <div>6 - Encerramento das Atividades Comerciais.</div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Atividade Principal */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Atividade Principal</span>
+                        <span className="block text-[8.5px] font-medium text-black leading-snug">
+                          {formData.atividadePrincipal || 'Prestação de serviços operacionais, logísticos e especializados.'}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Atividade Secundária */}
+                    <tr>
+                      <td colSpan={4} className="border border-black px-2 py-1 bg-white">
+                        <span className="block text-[8px] font-bold text-black uppercase">Atividade Secundária</span>
+                        <div className="text-[8px] font-medium text-black leading-snug space-y-0.5">
+                          {formData.atividadeSecundaria ? (
+                            formData.atividadeSecundaria.split('\n').map((linha, idx) => (
+                              <div key={idx}>{linha}</div>
+                            ))
+                          ) : (
+                            <div>Atividades auxiliares e de suporte operacional especializado.</div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Validade e Data Emissão */}
+                    <tr>
+                      <td colSpan={2} className="border border-black px-2 py-1 bg-white">
+                        <span className="font-bold text-[8px] text-black uppercase">Validade do Registro: </span>
+                        <span className="font-medium text-[8.5px] text-black">
+                          {formData.validadeAlvara || 'Indeterminada / Conforme Contrato'}
+                        </span>
+                      </td>
+                      <td colSpan={2} className="border border-black px-2 py-1 bg-white">
+                        <span className="font-bold text-[8px] text-black uppercase">Data de Emissão: </span>
+                        <span className="font-medium text-[8.5px] text-black">
+                          {formData.dataEmissaoAlvara || dataEmissao}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Situação Cadastral e Código Validação */}
+                    <tr>
+                      <td colSpan={2} className="border border-black px-2 py-1 bg-white">
+                        <span className="font-bold text-[8px] text-black uppercase">Situação Cadastral: </span>
+                        <span className="font-bold text-[8.5px] text-emerald-800 uppercase">
+                          ATIVO / HOMOLOGADO
+                        </span>
+                      </td>
+                      <td colSpan={2} className="border border-black px-2 py-1 bg-white">
+                        <span className="font-bold text-[8px] text-black uppercase">Código de Autenticação: </span>
+                        <span className="font-bold font-mono text-[8.5px] text-black">
+                          {formData.codigoValidacao || protocolo || 'FA6A094467'}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* RODAPÉ CORPORATIVO */}
+              <div className="border-t border-black/40 pt-1.5 mt-1.5 flex items-center justify-between text-[7.5px] font-semibold text-zinc-500 uppercase">
+                <span>Distribuidora Irmãos Barreiro de Bebidas &bull; Cadastro Corporativo (PJ)</span>
+                <span className="font-mono">Página 1 de 1</span>
+              </div>
+            </div>
+          ) : (
+            /* ========================================================== */
+            /* LAYOUT ORIGINAL DE CADASTRO INDIVIDUAL (PESSOA FÍSICA)     */
+            /* ========================================================== */
+            <div
+              ref={pdfRef}
+              data-pdf-root
+              className="print-document bg-white text-zinc-900 rounded-3xl p-6 sm:p-8 border border-zinc-200 shadow-xl space-y-4 max-w-4xl mx-auto"
+            >
+              {/* CABEÇALHO EXECUTIVO OFICIAL */}
+              <div className="border-b-2 border-red-600 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <Logo className="h-12 sm:h-14 shrink-0" />
+                  <div className="border-l border-zinc-300 pl-3">
+                    <h1 className="text-base sm:text-lg font-black text-zinc-950 uppercase tracking-tight leading-tight">
+                      Distribuidora Irmãos Barreiro de Bebidas
+                    </h1>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      Comprovante Oficial de Cadastro e Alocação Operacional
+                    </p>
+                    <p className="text-[11px] text-zinc-400">
+                      Sede: Distrito Industrial, Cascavel - CE
+                    </p>
+                  </div>
+                </div>
+
+                {/* Box de Protocolo */}
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-left sm:text-right min-w-[190px] shrink-0">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    Protocolo Oficial
+                  </span>
+                  <span className="text-sm font-mono font-black text-red-600 block">
+                    {protocolo}
+                  </span>
+                  <span className="text-[10px] text-zinc-500 block mt-0.5">
+                    Emissão: {dataEmissao}
+                  </span>
+                </div>
+              </div>
+
+              {/* SEÇÃO 1: IDENTIFICAÇÃO PESSOAL */}
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                  <User className="w-4 h-4 text-red-600 shrink-0" />
+                  <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
+                    1. Identificação Pessoal do Colaborador
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Nome Completo</span>
+                    <span className="text-sm font-bold text-zinc-900">{formData.nome || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">CPF</span>
+                    <span className="font-bold text-zinc-900 font-mono">{formData.cpf || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">RG / Órgão Emissor</span>
+                    <span className="font-bold text-zinc-900">{formData.rg || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Telefone / WhatsApp</span>
+                    <span className="font-bold text-zinc-900">{formData.telefone || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">E-mail</span>
+                    <span className="font-bold text-zinc-900 truncate block">{formData.email || 'Não informado'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SEÇÃO 2: ENDEREÇO RESIDENCIAL */}
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                  <MapPin className="w-4 h-4 text-red-600 shrink-0" />
+                  <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
+                    2. Endereço Residencial
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Logradouro / Rua</span>
+                    <span className="font-bold text-zinc-900">{formData.logradouro || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Número</span>
+                    <span className="font-bold text-zinc-900">{formData.numero || 'S/N'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Complemento</span>
+                    <span className="font-bold text-zinc-900">{formData.complemento || '—'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Bairro</span>
+                    <span className="font-bold text-zinc-900">{formData.bairro || 'Não informado'}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">CEP</span>
+                    <span className="font-bold text-zinc-900 font-mono">{formData.cep || 'Não informado'}</span>
+                  </div>
+
+                  <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Município / UF</span>
+                    <span className="font-bold text-zinc-900">{formData.cidade} - {formData.estado}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SEÇÃO 3: DADOS BANCÁRIOS */}
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                  <CreditCard className="w-4 h-4 text-red-600 shrink-0" />
+                  <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
+                    3. Informações Bancárias & Pagamento
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Instituição Bancária</span>
+                    <span className="font-bold text-zinc-900">
+                      {formData.banco === 'Outro' ? (formData.outroBanco || 'Outra Instituição') : formData.banco}
+                    </span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Tipo de Conta</span>
+                    <span className="font-bold text-zinc-900">{formData.tipoConta}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Agência / Conta</span>
+                    <span className="font-bold text-zinc-900 font-mono">
+                      Ag: {formData.agencia || '—'} | Cc: {formData.conta || '—'}
+                    </span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Tipo de PIX</span>
+                    <span className="font-bold text-zinc-900">{formData.tipoPix}</span>
+                  </div>
+
+                  <div className="col-span-3 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Chave PIX Cadastrada</span>
+                    <span className="font-bold text-red-600 font-mono">{formData.chavePix || formData.cpf || 'Cadastrada'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SEÇÃO 4: DADOS PROFISSIONAIS */}
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
+                  <Briefcase className="w-4 h-4 text-red-600 shrink-0" />
+                  <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
+                    4. Atribuição Profissional & Unidade
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Cargo / Função</span>
+                    <span className="font-bold text-zinc-900">
+                      {formData.cargo === 'Outro' ? (formData.outroCargo || 'Outra Função') : formData.cargo}
+                    </span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Unidade Operacional</span>
+                    <span className="font-bold text-zinc-900">{formData.unidade}</span>
+                  </div>
+
+                  <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase block">Turno de Trabalho</span>
+                    <span className="font-bold text-zinc-900">{formData.turno}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TERMO E AUTENTICAÇÃO */}
+              <div className="pt-3 border-t border-zinc-200 space-y-4 text-xs">
+                <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 text-zinc-600 leading-relaxed text-[11px]">
+                  <p>
+                    <strong>Declaração de Veracidade e Sigilo:</strong> O colaborador declara sob as penas da lei que todas as informações acima são verídicas e atualizadas, autorizando o tratamento de seus dados pessoais exclusivamente para fins trabalhistas, cadastrais e bancários pela <strong>Distribuidora Irmãos Barreiro de Bebidas</strong> em conformidade com a LGPD (Lei Federal nº 13.709/2018).
                   </p>
-                  <p className="text-[11px] text-zinc-400">
-                    Sede: Distrito Industrial, Cascavel - CE
-                  </p>
-                </div>
-              </div>
-
-              {/* Box de Protocolo */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-2.5 text-left sm:text-right min-w-[190px] shrink-0">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Protocolo Oficial
-                </span>
-                <span className="text-sm font-mono font-black text-red-600 block">
-                  {protocolo}
-                </span>
-                <span className="text-[10px] text-zinc-500 block mt-0.5">
-                  Emissão: {dataEmissao}
-                </span>
-              </div>
-            </div>
-
-            {/* SEÇÃO 1: DADOS PESSOAIS */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
-                <User className="w-4 h-4 text-red-600 shrink-0" />
-                <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
-                  1. Identificação Pessoal do Colaborador
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Nome Completo</span>
-                  <span className="text-sm font-bold text-zinc-900">{formData.nome || 'Não informado'}</span>
                 </div>
 
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">CPF</span>
-                  <span className="font-bold text-zinc-900 font-mono">{formData.cpf || 'Não informado'}</span>
-                </div>
+                {/* ASSINATURAS (Para documento impresso) */}
+                <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+                  <div className="border-t border-zinc-400 pt-1.5">
+                    <p className="font-bold text-zinc-900">{formData.nome || 'Assinatura do Colaborador'}</p>
+                    <p className="text-[10px] text-zinc-500">Colaborador / Titular dos Dados</p>
+                  </div>
 
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">RG / Órgão Emissor</span>
-                  <span className="font-bold text-zinc-900">{formData.rg || 'Não informado'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Telefone / WhatsApp</span>
-                  <span className="font-bold text-zinc-900">{formData.telefone || 'Não informado'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">E-mail</span>
-                  <span className="font-bold text-zinc-900 truncate block">{formData.email || 'Não informado'}</span>
+                  <div className="border-t border-zinc-400 pt-1.5">
+                    <p className="font-bold text-zinc-900">Distribuidora Irmãos Barreiro</p>
+                    <p className="text-[10px] text-zinc-500">Depto. de Pessoal / Validação RH</p>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* SEÇÃO 2: ENDEREÇO RESIDENCIAL */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
-                <MapPin className="w-4 h-4 text-red-600 shrink-0" />
-                <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
-                  2. Endereço Residencial
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Logradouro / Rua</span>
-                  <span className="font-bold text-zinc-900">{formData.logradouro || 'Não informado'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Número</span>
-                  <span className="font-bold text-zinc-900">{formData.numero || 'S/N'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Complemento</span>
-                  <span className="font-bold text-zinc-900">{formData.complemento || '—'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Bairro</span>
-                  <span className="font-bold text-zinc-900">{formData.bairro || 'Não informado'}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">CEP</span>
-                  <span className="font-bold text-zinc-900 font-mono">{formData.cep || 'Não informado'}</span>
-                </div>
-
-                <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Município / UF</span>
-                  <span className="font-bold text-zinc-900">{formData.cidade} - {formData.estado}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* SEÇÃO 3: DADOS BANCÁRIOS */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
-                <CreditCard className="w-4 h-4 text-red-600 shrink-0" />
-                <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
-                  3. Informações Bancárias & Pagamento
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="col-span-2 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Instituição Bancária</span>
-                  <span className="font-bold text-zinc-900">
-                    {formData.banco === 'Outro' ? (formData.outroBanco || 'Outra Instituição') : formData.banco}
-                  </span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Tipo de Conta</span>
-                  <span className="font-bold text-zinc-900">{formData.tipoConta}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Agência / Conta</span>
-                  <span className="font-bold text-zinc-900 font-mono">
-                    Ag: {formData.agencia || '—'} | Cc: {formData.conta || '—'}
-                  </span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Tipo de PIX</span>
-                  <span className="font-bold text-zinc-900">{formData.tipoPix}</span>
-                </div>
-
-                <div className="col-span-3 bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Chave PIX Cadastrada</span>
-                  <span className="font-bold text-red-600 font-mono">{formData.chavePix || formData.cpf || 'Cadastrada'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* SEÇÃO 4: DADOS PROFISSIONAIS */}
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 border-b border-zinc-200 pb-1.5">
-                <Briefcase className="w-4 h-4 text-red-600 shrink-0" />
-                <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-zinc-900">
-                  4. Atribuição Profissional & Unidade
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Cargo / Função</span>
-                  <span className="font-bold text-zinc-900">
-                    {formData.cargo === 'Outro' ? (formData.outroCargo || 'Outra Função') : formData.cargo}
-                  </span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Unidade Operacional</span>
-                  <span className="font-bold text-zinc-900">{formData.unidade}</span>
-                </div>
-
-                <div className="bg-zinc-50/80 p-2.5 rounded-xl border border-zinc-200/80">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase block">Turno de Trabalho</span>
-                  <span className="font-bold text-zinc-900">{formData.turno}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* TERMO E AUTENTICAÇÃO */}
-            <div className="pt-3 border-t border-zinc-200 space-y-4 text-xs">
-              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 text-zinc-600 leading-relaxed text-[11px]">
-                <p>
-                  <strong>Declaração de Veracidade e Sigilo:</strong> O colaborador declara sob as penas da lei que todas as informações acima são verídicas e atualizadas, autorizando o tratamento de seus dados pessoais exclusivamente para fins trabalhistas, cadastrais e bancários pela <strong>Distribuidora Irmãos Barreiro de Bebidas</strong> em conformidade com a LGPD (Lei Federal nº 13.709/2018).
-                </p>
-              </div>
-
-              {/* ASSINATURAS (Para documento impresso) */}
-              <div className="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
-                <div className="border-t border-zinc-400 pt-1.5">
-                  <p className="font-bold text-zinc-900">{formData.nome || 'Assinatura do Colaborador'}</p>
-                  <p className="text-[10px] text-zinc-500">Colaborador / Titular dos Dados</p>
-                </div>
-
-                <div className="border-t border-zinc-400 pt-1.5">
-                  <p className="font-bold text-zinc-900">Distribuidora Irmãos Barreiro</p>
-                  <p className="text-[10px] text-zinc-500">Depto. de Pessoal / Validação RH</p>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          )}
         </div>
       ) : (
         /* CONTAINER PRINCIPAL DO FORMULÁRIO (SIDEBAR DESKTOP + STEPPER MOBILE) */
@@ -950,7 +1366,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
               <div className="space-y-3">
                 <div className="px-3 py-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-400">
                   <span>Etapas do Cadastro</span>
-                  <span className="text-zinc-500 font-mono">{currentStep}/4</span>
+                  <span className="text-zinc-500 font-mono">{currentStep}/{steps.length}</span>
                 </div>
 
                 <div className="space-y-2">
@@ -1004,11 +1420,11 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                             </span>
                           ) : isActive ? (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/20 text-white">
-                              {currentStep * 25}%
+                              {Math.round((currentStep / steps.length) * 100)}%
                             </span>
                           ) : (
                             <span className="text-[10px] font-mono text-zinc-500">
-                              {step.id}/4
+                              {step.id}/{steps.length}
                             </span>
                           )}
                         </div>
@@ -1039,16 +1455,16 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                   <div className="mb-5 pb-4 border-b border-zinc-100 flex items-start justify-between">
                     <div>
                       <h3 className="text-2xl font-black text-zinc-950 tracking-tight">
-                        {steps[currentStep - 1].title}
+                        {steps[currentStep - 1]?.title || 'Cadastro'}
                       </h3>
                       <p className="text-xs text-zinc-500 mt-1">
-                        Etapa {currentStep} de 4 • Preencha os campos obrigatórios com atenção
+                        Etapa {currentStep} de {steps.length} • Preencha os campos com atenção
                       </p>
                     </div>
 
                     <div className="text-right">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                        <span>{currentStep * 25}% Concluído</span>
+                        <span>{Math.round((currentStep / steps.length) * 100)}% Concluído</span>
                       </span>
                     </div>
                   </div>
@@ -1057,141 +1473,515 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                   <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden mb-6">
                     <div
                       className="bg-red-600 h-full transition-all duration-300 rounded-full"
-                      style={{ width: `${currentStep * 25}%` }}
+                      style={{ width: `${(currentStep / steps.length) * 100}%` }}
                     />
                   </div>
 
                   {/* ============================================================ */}
-                  {/* ETAPA 1: DADOS PESSOAIS                                      */}
+                  {/* ETAPA 1: IDENTIFICAÇÃO (PESSOA FÍSICA OU PESSOA JURÍDICA)     */}
                   {/* ============================================================ */}
                   {currentStep === 1 && (
-                    <div className="space-y-4 animate-fadeIn">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="sm:col-span-2">
-                          <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            Nome Completo <span className="text-red-600 font-black">*</span>
+                    <div className="space-y-5 animate-fadeIn">
+                      {/* SELETOR DE TIPO: PESSOA FÍSICA VS PESSOA JURÍDICA */}
+                      <div className="bg-zinc-50 p-3 sm:p-4 rounded-2xl border border-zinc-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-black uppercase text-zinc-700 tracking-wider flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-red-600" />
+                            <span>Selecione o Tipo de Cadastro</span>
                           </label>
-                          <input
-                            type="text"
-                            value={formData.nome}
-                            onChange={(e) => handleChange('nome', e.target.value)}
-                            onBlur={() => handleBlur('nome')}
-                            placeholder="Ex: João da Silva Barreiro"
-                            className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
-                              touched.nome && errors.nome
-                                ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
-                                : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
-                            }`}
-                          />
-                          {touched.nome && errors.nome && (
-                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>{errors.nome}</span>
-                            </p>
-                          )}
+                          <span className="text-[11px] font-semibold text-zinc-500">
+                            {formData.tipoPessoa === 'juridica' ? 'Cadastro Empresarial (PJ)' : 'Cadastro Individual (PF)'}
+                          </span>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            CPF <span className="text-red-600 font-black">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.cpf}
-                            onChange={(e) => handleChange('cpf', e.target.value)}
-                            onBlur={() => handleBlur('cpf')}
-                            placeholder="000.000.000-00"
-                            maxLength={14}
-                            className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
-                              touched.cpf && errors.cpf
-                                ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
-                                : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleTipoPessoaChange('fisica')}
+                            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                              formData.tipoPessoa === 'fisica'
+                                ? 'border-red-600 bg-red-600 text-white shadow-md shadow-red-600/25 scale-[1.01]'
+                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
                             }`}
-                          />
-                          {touched.cpf && errors.cpf && (
-                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>{errors.cpf}</span>
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            RG / Órgão Emissor <span className="text-red-600 font-black">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.rg}
-                            onChange={(e) => handleChange('rg', e.target.value)}
-                            onBlur={() => handleBlur('rg')}
-                            placeholder="Ex: 2008010... SSP/CE"
-                            className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
-                              touched.rg && errors.rg
-                                ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
-                                : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                          >
+                            <User className="w-4 h-4" />
+                            <span>Pessoa Física</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleTipoPessoaChange('juridica')}
+                            className={`flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl border-2 font-bold text-xs sm:text-sm transition-all cursor-pointer ${
+                              formData.tipoPessoa === 'juridica'
+                                ? 'border-red-600 bg-red-600 text-white shadow-md shadow-red-600/25 scale-[1.01]'
+                                : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
                             }`}
-                          />
-                          {touched.rg && errors.rg && (
-                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>{errors.rg}</span>
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            Telefone / WhatsApp <span className="text-red-600 font-black">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.telefone}
-                            onChange={(e) => handleChange('telefone', e.target.value)}
-                            onBlur={() => handleBlur('telefone')}
-                            placeholder="(85) 99999-9999"
-                            maxLength={15}
-                            className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
-                              touched.telefone && errors.telefone
-                                ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
-                                : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
-                            }`}
-                          />
-                          {touched.telefone && errors.telefone && (
-                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>{errors.telefone}</span>
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <label className="text-xs font-extrabold uppercase text-zinc-900 tracking-wide">
-                              E-mail
-                            </label>
-                            <span className="text-zinc-400 font-medium text-[11px] lowercase">(opcional)</span>
-                          </div>
-                          <input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => handleChange('email', e.target.value)}
-                            onBlur={() => handleBlur('email')}
-                            placeholder="nome@empresa.com"
-                            className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
-                              touched.email && errors.email
-                                ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
-                                : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
-                            }`}
-                          />
-                          {touched.email && errors.email && (
-                            <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
-                              <AlertCircle className="w-3.5 h-3.5" />
-                              <span>{errors.email}</span>
-                            </p>
-                          )}
+                          >
+                            <Building2 className="w-4 h-4" />
+                            <span>Pessoa Jurídica (PJ)</span>
+                          </button>
                         </div>
                       </div>
+
+                      {/* CAMPOS PESSOA FÍSICA */}
+                      {formData.tipoPessoa === 'fisica' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Nome Completo <span className="text-red-600 font-black">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.nome}
+                              onChange={(e) => handleChange('nome', e.target.value)}
+                              onBlur={() => handleBlur('nome')}
+                              placeholder="Ex: João da Silva Barreiro"
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.nome && errors.nome
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.nome && errors.nome && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.nome}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              CPF <span className="text-red-600 font-black">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.cpf}
+                              onChange={(e) => handleChange('cpf', e.target.value)}
+                              onBlur={() => handleBlur('cpf')}
+                              placeholder="000.000.000-00"
+                              maxLength={14}
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.cpf && errors.cpf
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.cpf && errors.cpf && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.cpf}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              RG / Órgão Emissor <span className="text-red-600 font-black">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.rg}
+                              onChange={(e) => handleChange('rg', e.target.value)}
+                              onBlur={() => handleBlur('rg')}
+                              placeholder="Ex: 2008010... SSP/CE"
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.rg && errors.rg
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.rg && errors.rg && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.rg}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-extrabold uppercase text-zinc-900 tracking-wide">
+                                Telefone / WhatsApp
+                              </label>
+                              <span className="text-zinc-400 font-medium text-[11px] lowercase">(opcional)</span>
+                            </div>
+                            <input
+                              type="text"
+                              value={formData.telefone}
+                              onChange={(e) => handleChange('telefone', e.target.value)}
+                              onBlur={() => handleBlur('telefone')}
+                              placeholder="(85) 99999-9999"
+                              maxLength={15}
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.telefone && errors.telefone
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.telefone && errors.telefone && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.telefone}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-extrabold uppercase text-zinc-900 tracking-wide">
+                                E-mail
+                              </label>
+                              <span className="text-zinc-400 font-medium text-[11px] lowercase">(opcional)</span>
+                            </div>
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => handleChange('email', e.target.value)}
+                              onBlur={() => handleBlur('email')}
+                              placeholder="nome@empresa.com"
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.email && errors.email
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.email && errors.email && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.email}</span>
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        /* CAMPOS PESSOA JURÍDICA (PJ) - CAMPOS CORPORATIVOS */
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                          {/* CAMPO OBRIGATÓRIO EM DESTAQUE: RAZÃO SOCIAL */}
+                          <div className="sm:col-span-2 bg-red-50/40 p-3.5 rounded-2xl border border-red-200/80">
+                            <label className="block text-xs font-black uppercase text-red-900 tracking-wide mb-1.5 flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <Building2 className="w-4 h-4 text-red-600" />
+                                Razão Social da Empresa <span className="text-red-600 font-black text-sm">*</span>
+                              </span>
+                              <span className="text-[10px] uppercase font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-md">
+                                Obrigatório
+                              </span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.razaoSocial}
+                              onChange={(e) => handleChange('razaoSocial', e.target.value)}
+                              onBlur={() => handleBlur('razaoSocial')}
+                              placeholder="Ex: EQUILIBRIUM SERVICOS DE DEDETIZACAO LTDA"
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-bold placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none uppercase ${
+                                touched.razaoSocial && errors.razaoSocial
+                                  ? 'border-red-500 bg-red-50 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 bg-white hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.razaoSocial && errors.razaoSocial && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.razaoSocial}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* NOME FANTASIA */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Nome Fantasia
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.nomeFantasia}
+                              onChange={(e) => handleChange('nomeFantasia', e.target.value)}
+                              placeholder="Ex: EQUILIBRIUM SOLUCOES AMBIENTAIS"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* CNPJ */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              CNPJ <span className="text-red-600 font-black">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.cnpj}
+                              onChange={(e) => handleChange('cnpj', e.target.value)}
+                              onBlur={() => handleBlur('cnpj')}
+                              placeholder="00.000.000/0000-00"
+                              maxLength={18}
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.cnpj && errors.cnpj
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.cnpj && errors.cnpj && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.cnpj}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* ENDEREÇO DA EMPRESA (ALVARÁ) */}
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Endereço Completo da Empresa
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.enderecoPJ}
+                              onChange={(e) => handleChange('enderecoPJ', e.target.value)}
+                              placeholder="Ex: Av. Principal, 500 - Sede Empresarial"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none uppercase"
+                            />
+                          </div>
+
+                          {/* TIPO DE REGISTRO */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Tipo de Registro / Alvará
+                            </label>
+                            <select
+                              value={formData.tipoAlvara}
+                              onChange={(e) => handleChange('tipoAlvara', e.target.value)}
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium text-sm bg-white outline-none"
+                            >
+                              <option value="HOMOLOGAÇÃO CORPORATIVA">HOMOLOGAÇÃO CORPORATIVA</option>
+                              <option value="RENOVAÇÃO">RENOVAÇÃO</option>
+                              <option value="INICIAL">INICIAL</option>
+                              <option value="DEFINITIVO">DEFINITIVO</option>
+                            </select>
+                          </div>
+
+                          {/* NÚMERO DO REGISTRO */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Nº do Registro / Alvará
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.numeroAlvara}
+                              onChange={(e) => handleChange('numeroAlvara', e.target.value)}
+                              placeholder="Ex: REG-2025/01"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* INSCRIÇÃO MUNICIPAL */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Inscrição Municipal
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.inscricaoMunicipal}
+                              onChange={(e) => handleChange('inscricaoMunicipal', e.target.value)}
+                              placeholder="Ex: 43133"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* INSCRIÇÃO ESTADUAL */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Inscrição Estadual
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.inscricaoEstadual}
+                              onChange={(e) => handleChange('inscricaoEstadual', e.target.value)}
+                              placeholder="Ex: 11954"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-mono font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* PORTE DA EMPRESA */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Porte da Empresa
+                            </label>
+                            <select
+                              value={formData.porte}
+                              onChange={(e) => handleChange('porte', e.target.value)}
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium text-sm bg-white outline-none"
+                            >
+                              <option value="Microempresa (ME EPP)">Microempresa (ME EPP)</option>
+                              <option value="MEI - Microempreendedor Individual">MEI - Microempreendedor Individual</option>
+                              <option value="EPP - Empresa de Pequeno Porte">EPP - Empresa de Pequeno Porte</option>
+                              <option value="Sociedade Limitada (LTDA)">Sociedade Limitada (LTDA)</option>
+                              <option value="Médio / Grande Porte">Médio / Grande Porte</option>
+                            </select>
+                          </div>
+
+                          {/* HORÁRIO DE ATENDIMENTO / FUNCIONAMENTO */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Horário de Funcionamento
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.horarioFuncionamento}
+                              onChange={(e) => handleChange('horarioFuncionamento', e.target.value)}
+                              placeholder="07:00 - 17:00"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* SÓCIO ADMINISTRADOR / REPRESENTANTE */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Sócio Administrador / Responsável
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.socioAdministrador}
+                              onChange={(e) => handleChange('socioAdministrador', e.target.value)}
+                              placeholder="Nome do sócio ou representante"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* CATEGORIA DE ATUAÇÃO */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Categoria de Atuação
+                            </label>
+                            <select
+                              value={formData.categoriaAtuacao}
+                              onChange={(e) => handleChange('categoriaAtuacao', e.target.value)}
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium text-sm bg-white outline-none"
+                            >
+                              <option value="Prestação de Serviços">Prestação de Serviços</option>
+                              <option value="Comércio Varejista / Atacadista">Comércio Varejista / Atacadista</option>
+                              <option value="Transporte e Logística">Transporte e Logística</option>
+                              <option value="Dedetização e Controle de Pragas">Dedetização e Controle de Pragas</option>
+                              <option value="Manutenção e Conservação">Manutenção e Conservação</option>
+                              <option value="Outro Ramo">Outro Ramo</option>
+                            </select>
+                          </div>
+
+                          {/* REGIME DE TRIBUTAÇÃO */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Regime de Tributação
+                            </label>
+                            <select
+                              value={formData.regimeTributacao}
+                              onChange={(e) => handleChange('regimeTributacao', e.target.value)}
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium text-sm bg-white outline-none"
+                            >
+                              <option value="Simples Nacional">Simples Nacional</option>
+                              <option value="Isenção Fiscal">Isenção Fiscal</option>
+                              <option value="Lucro Presumido">Lucro Presumido</option>
+                              <option value="Lucro Real">Lucro Real</option>
+                            </select>
+                          </div>
+
+                          {/* ÁREA DAS INSTALAÇÕES */}
+                          <div>
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Área das Instalações
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.areaInstalacoes}
+                              onChange={(e) => handleChange('areaInstalacoes', e.target.value)}
+                              placeholder="Ex: 12m²"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* TELEFONE COMERCIAL */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-extrabold uppercase text-zinc-900 tracking-wide">
+                                Telefone Comercial / WhatsApp
+                              </label>
+                              <span className="text-zinc-400 font-medium text-[11px] lowercase">(opcional)</span>
+                            </div>
+                            <input
+                              type="text"
+                              value={formData.telefone}
+                              onChange={(e) => handleChange('telefone', e.target.value)}
+                              onBlur={() => handleBlur('telefone')}
+                              placeholder="(85) 99999-9999"
+                              maxLength={15}
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.telefone && errors.telefone
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.telefone && errors.telefone && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.telefone}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* E-MAIL CORPORATIVO */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="text-xs font-extrabold uppercase text-zinc-900 tracking-wide">
+                                E-mail Corporativo
+                              </label>
+                              <span className="text-zinc-400 font-medium text-[11px] lowercase">(opcional)</span>
+                            </div>
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => handleChange('email', e.target.value)}
+                              onBlur={() => handleBlur('email')}
+                              placeholder="contato@empresa.com"
+                              className={`w-full px-4 py-2.5 rounded-xl border text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none ${
+                                touched.email && errors.email
+                                  ? 'border-red-500 bg-red-50/20 focus:ring-2 focus:ring-red-500/20'
+                                  : 'border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
+                              }`}
+                            />
+                            {touched.email && errors.email && (
+                              <p className="text-xs text-red-600 font-medium mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>{errors.email}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* ATIVIDADE PRINCIPAL (CNAE / RAMO) */}
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Atividade Principal (Ramo Principal)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.atividadePrincipal}
+                              onChange={(e) => handleChange('atividadePrincipal', e.target.value)}
+                              placeholder="Ex: 812220000 - Imunização e controle de pragas urbanas (Dedetização, desinfecção, pulverização)"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+
+                          {/* ATIVIDADE SECUNDÁRIA */}
+                          <div className="sm:col-span-2">
+                            <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
+                              Atividade Secundária (Opcional)
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.atividadeSecundaria}
+                              onChange={(e) => handleChange('atividadeSecundaria', e.target.value)}
+                              placeholder="Ex: 81290000 - Atividades de limpeza não especificadas anteriormente"
+                              className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium placeholder:text-zinc-400 placeholder:font-normal text-sm transition-all outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1414,6 +2204,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                             className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 hover:border-zinc-400 focus:border-red-600 focus:ring-2 focus:ring-red-500/20 text-zinc-900 font-medium text-sm bg-white outline-none"
                           >
                             <option value="CPF">CPF</option>
+                            <option value="CNPJ">CNPJ</option>
                             <option value="E-mail">E-mail</option>
                             <option value="Telefone">Telefone / Celular</option>
                             <option value="Aleatória">Chave Aleatória (EVP)</option>
@@ -1640,10 +2431,10 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
                   <button
                     type="submit"
-                    disabled={currentStep === 4 && !formData.aceitouTermos}
+                    disabled={currentStep === 4 && formData.tipoPessoa === 'fisica' && !formData.aceitouTermos}
                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-600/25 hover:shadow-red-600/35 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span>{currentStep === 4 ? 'Concluir Cadastro' : 'Continuar'}</span>
+                    <span>{currentStep === steps.length ? 'Concluir Cadastro' : 'Continuar'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

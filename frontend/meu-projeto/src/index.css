@@ -133,8 +133,23 @@
     color: #000000 !important;
   }
 
+  .print-document {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 280mm !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    margin: 0 auto !important;
+  }
+
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 8mm;
   }
 }

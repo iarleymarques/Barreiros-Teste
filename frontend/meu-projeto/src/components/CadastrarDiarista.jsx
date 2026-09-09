@@ -15,7 +15,8 @@ import {
   Sparkles, 
   X, 
   Check, 
-  UserCheck 
+  UserCheck,
+  Building2
 } from 'lucide-react';
 
 // Banco de dados padrão de colaboradores e diaristas da Distribuidora Irmãos Barreiro
@@ -41,6 +42,10 @@ const PROFISSOES_PADRAO = [
 
 export default function CadastrarDiarista({ onBack, onSave, dataInicial, diaristasExistentes = [] }) {
   const [formData, setFormData] = useState({
+    tipoPessoa: 'fisica', // 'fisica' | 'juridica'
+    razaoSocial: '',
+    nomeFantasia: '',
+    cnpj: '',
     nome: '',
     valorDiaria: '0.00',
     quantidadeDiarias: '1',
@@ -157,31 +162,59 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
     setOutraFuncao('');
   }
 
+  function formatCNPJMask(val) {
+    const v = val.replace(/\D/g, '').slice(0, 14);
+    if (v.length <= 2) return v;
+    if (v.length <= 5) return `${v.slice(0, 2)}.${v.slice(2)}`;
+    if (v.length <= 8) return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5)}`;
+    if (v.length <= 12) return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8)}`;
+    return `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8, 12)}-${v.slice(12, 14)}`;
+  }
+
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
+    let formatted = value;
+    if (name === 'cnpj' || (name === 'chavePix' && formData.tipoPix === 'cnpj')) {
+      formatted = formatCNPJMask(value);
+    }
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === 'checkbox' ? checked : formatted,
     }));
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!formData.nome.trim()) {
-      setErro('Por favor, informe o nome do diarista.');
-      return;
+    if (formData.tipoPessoa === 'juridica') {
+      if (!formData.razaoSocial.trim()) {
+        setErro('Por favor, informe a Razão Social da empresa.');
+        return;
+      }
+    } else {
+      if (!formData.nome.trim()) {
+        setErro('Por favor, informe o nome do diarista.');
+        return;
+      }
     }
+
     if (!formData.chavePix.trim()) {
-      setErro('Por favor, informe a chave PIX do diarista.');
+      setErro('Por favor, informe a chave PIX.');
       return;
     }
 
     const profissaoFinal = formData.profissao === 'Outra Função' ? outraFuncao.trim() : formData.profissao.trim();
+    const nomeFinal = formData.tipoPessoa === 'juridica'
+      ? (formData.razaoSocial || formData.nomeFantasia || 'EMPRESA').toUpperCase().trim()
+      : formData.nome.toUpperCase().trim();
 
     // Cria um registro com identificador único independente (não sobrescreve outros dias)
     const novoDiarista = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      nome: formData.nome.toUpperCase().trim(),
+      tipoPessoa: formData.tipoPessoa,
+      razaoSocial: formData.razaoSocial.trim(),
+      nomeFantasia: formData.nomeFantasia.trim(),
+      cnpj: formData.cnpj.trim(),
+      nome: nomeFinal,
       valor: parseFloat(formData.valorDiaria) || 0.0,
       diarias: parseInt(formData.quantidadeDiarias, 10) || 1,
       pix: formData.chavePix.trim(),
@@ -402,28 +435,125 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
 
         {/* Bloco 1: Identificação */}
         <div className="bg-zinc-50/70 p-5 sm:p-6 rounded-2xl border border-zinc-200/70 space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-            <User className="w-4 h-4 text-red-600" />
-            Identificação do Diarista
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-200/70 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-700 flex items-center gap-2">
+              <User className="w-4 h-4 text-red-600" />
+              Identificação do Diarista / Prestador
+            </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
-                Nome Completo / Apelido do Diarista <span className="text-red-600">*</span>
-              </label>
-              <div className="relative">
+            {/* SELETOR RÁPIDO PF / PJ */}
+            <div className="flex items-center gap-1.5 p-1 bg-zinc-200/70 rounded-xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    tipoPessoa: 'fisica',
+                    tipoPix: prev.tipoPix === 'cnpj' ? 'cpf' : prev.tipoPix
+                  }));
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  formData.tipoPessoa === 'fisica'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Pessoa Física</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    tipoPessoa: 'juridica',
+                    tipoPix: 'cnpj'
+                  }));
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  formData.tipoPessoa === 'juridica'
+                    ? 'bg-red-600 text-white shadow-xs'
+                    : 'text-zinc-600 hover:text-zinc-900'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Pessoa Jurídica (PJ)</span>
+              </button>
+            </div>
+          </div>
+
+          {formData.tipoPessoa === 'juridica' ? (
+            /* CAMPOS PESSOA JURÍDICA */
+            <div className="space-y-4 animate-fadeIn">
+              <div className="bg-red-50/50 p-4 rounded-xl border border-red-200/80">
+                <label className="block text-xs font-black uppercase text-red-900 mb-1.5 flex items-center justify-between">
+                  <span>Razão Social da Empresa <span className="text-red-600 font-black">*</span></span>
+                  <span className="text-[10px] uppercase font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded">Obrigatório</span>
+                </label>
                 <input
                   type="text"
-                  name="nome"
-                  value={formData.nome}
+                  name="razaoSocial"
+                  value={formData.razaoSocial}
                   onChange={handleChange}
-                  placeholder="Ex: FRANCISCO DIONE ou DESCARREGO TEND TUDO"
+                  placeholder="Ex: EQUILIBRIUM SERVICOS DE DEDETIZACAO LTDA"
                   required
-                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm uppercase font-semibold text-zinc-900 bg-white"
+                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm uppercase font-bold text-zinc-900 bg-white"
                 />
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
+                    Nome Fantasia
+                  </label>
+                  <input
+                    type="text"
+                    name="nomeFantasia"
+                    value={formData.nomeFantasia}
+                    onChange={handleChange}
+                    placeholder="Ex: EQUILIBRIUM SOLUCOES AMBIENTAIS"
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm text-zinc-900 bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
+                    CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    name="cnpj"
+                    value={formData.cnpj}
+                    onChange={handleChange}
+                    placeholder="00.000.000/0000-00"
+                    maxLength={18}
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-mono font-medium text-zinc-900 bg-white"
+                  />
+                </div>
+              </div>
             </div>
+          ) : (
+            /* CAMPOS PESSOA FÍSICA */
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
+                  Nome Completo / Apelido do Diarista <span className="text-red-600">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    placeholder="Ex: FRANCISCO DIONE ou DESCARREGO TEND TUDO"
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm uppercase font-semibold text-zinc-900 bg-white"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
             <div>
               <label className="block text-xs font-bold uppercase text-zinc-700 mb-1.5">
@@ -494,7 +624,6 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
               )}
             </div>
           </div>
-        </div>
 
         {/* Bloco 2: Valores e Diárias */}
         <div className="bg-zinc-50/70 p-5 sm:p-6 rounded-2xl border border-zinc-200/70 space-y-4">
@@ -567,6 +696,7 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
                 className="w-full px-3 py-2.5 rounded-xl border border-zinc-300 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 text-sm font-semibold text-zinc-900 bg-white"
               >
                 <option value="cpf">CPF</option>
+                <option value="cnpj">CNPJ</option>
                 <option value="telefone">Telefone (Celular)</option>
                 <option value="email">E-mail</option>
                 <option value="aleatoria">Chave Aleatória</option>
@@ -583,7 +713,9 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
                 value={formData.chavePix}
                 onChange={handleChange}
                 placeholder={
-                  formData.tipoPix === 'cpf'
+                  formData.tipoPix === 'cnpj'
+                    ? '00.000.000/0000-00'
+                    : formData.tipoPix === 'cpf'
                     ? '000.000.000-00'
                     : formData.tipoPix === 'telefone'
                     ? '85 9 9999-9999'
