@@ -338,10 +338,10 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     const documentos = await getDocumentosColaboradorApi(colaboradorId);
     documentos.sort((a, b) => ordem.indexOf(a.tipo_documento) - ordem.indexOf(b.tipo_documento));
     const titulos = {
-      ficha_assinada: 'Ficha cadastral assinada',
+      ficha_assinada: 'CPF',
       identidade: 'Documento de identidade',
       comprovante_residencia: 'Comprovante de residência',
-      comprovante_bancario: 'Comprovante bancário',
+      comprovante_bancario: 'Outro documento',
     };
     for (const documento of documentos) {
       try {

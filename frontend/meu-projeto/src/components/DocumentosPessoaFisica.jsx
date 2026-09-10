@@ -8,10 +8,10 @@ import {
 } from '../services/api';
 
 const ESPACOS_DOCUMENTOS = [
-  { id: 'ficha_assinada', titulo: 'Ficha cadastral assinada', descricao: 'Envie a ficha impressa, assinada e digitalizada.' },
+  { id: 'ficha_assinada', titulo: 'CPF', descricao: 'Envie o documento de CPF digitalizado.' },
   { id: 'identidade', titulo: 'Documento de identidade', descricao: 'RG ou documento oficial com foto.' },
   { id: 'comprovante_residencia', titulo: 'Comprovante de residencia', descricao: 'Comprovante atualizado do endereco informado.' },
-  { id: 'comprovante_bancario', titulo: 'Comprovante bancario', descricao: 'Documento com banco, agencia e conta.' },
+  { id: 'comprovante_bancario', titulo: 'Outro documento', descricao: 'Envie outro documento complementar.' },
 ];
 
 const TAMANHO_MAXIMO = 10 * 1024 * 1024;
