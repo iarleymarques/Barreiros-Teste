@@ -477,15 +477,17 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
       // Diferente do html2canvas, esta biblioteca não tenta interpretar
       // oklch(): o próprio navegador desenha as cores modernas do Tailwind.
+      const larguraCaptura = Math.ceil(element.scrollWidth);
       const canvas = await toCanvas(element, {
         pixelRatio: 2.5,
         backgroundColor: '#ffffff',
         cacheBust: true,
-        width: 800,
+        width: larguraCaptura,
         style: {
-          width: '800px',
-          maxWidth: '800px',
-          minWidth: '800px',
+          width: `${larguraCaptura}px`,
+          maxWidth: `${larguraCaptura}px`,
+          minWidth: `${larguraCaptura}px`,
+          boxSizing: 'border-box',
           margin: '0 auto',
           boxShadow: 'none',
           borderRadius: '0px',
