@@ -256,7 +256,9 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
       // Busca diaristas do banco para o período
       let dadosBanco = [];
       if (tipoRecibo === 'diaria') {
-        const res = await getDiaristasApi(form.dataRef);
+        // No modo diário, disponibiliza todos os lançamentos para escolha,
+        // sempre identificados pela data no seletor.
+        const res = await getDiaristasApi();
         dadosBanco = Array.isArray(res) ? res : [];
       } else if (tipoRecibo === 'semanal') {
         // Busca cada dia da semana
@@ -325,6 +327,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
         cpf: sel.cpf || prev.cpf,
         pix: sel.pix || prev.pix || '',
         valorUnitario: parseFloat(sel.valor) || 0,
+        dataRef: tipoRecibo === 'diaria' && sel.data ? sel.data : prev.dataRef,
       }));
     }
   }
