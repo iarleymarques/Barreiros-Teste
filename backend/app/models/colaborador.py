@@ -4,7 +4,7 @@ from sqlalchemy import Column, String, Boolean, DateTime, Date, ForeignKey, Text
 from app.core.database import Base
 
 class ColaboradorCadastro(Base):
-    __tablename__ = "colaboradores_cadastros"
+    __tablename__ = "pessoas_fisicas_cadastros"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     protocolo = Column(String(50), unique=True, index=True, nullable=False)

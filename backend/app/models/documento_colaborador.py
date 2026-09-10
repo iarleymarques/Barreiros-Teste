@@ -7,13 +7,13 @@ from app.core.database import Base
 
 
 class DocumentoColaborador(Base):
-    __tablename__ = "documentos_colaboradores"
+    __tablename__ = "documentos_pessoas_fisicas"
     __table_args__ = (
-        UniqueConstraint("colaborador_id", "tipo_documento", name="uq_documento_por_slot"),
+        UniqueConstraint("colaborador_id", "tipo_documento", name="uq_documento_pf_por_slot"),
     )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    colaborador_id = Column(String, ForeignKey("colaboradores_cadastros.id", ondelete="CASCADE"), nullable=False, index=True)
+    colaborador_id = Column(String, ForeignKey("pessoas_fisicas_cadastros.id", ondelete="CASCADE"), nullable=False, index=True)
     tipo_documento = Column(String(50), nullable=False)
     nome_arquivo = Column(String(255), nullable=False)
     content_type = Column(String(100), nullable=False)

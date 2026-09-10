@@ -27,17 +27,40 @@ def init_db():
         # Garante compatibilidade de tamanho para campos criptografados
         with engine.connect() as conn:
             migration_sqls = [
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN cpf TYPE TEXT;",
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN rg TYPE TEXT;",
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN telefone TYPE TEXT;",
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN agencia TYPE TEXT;",
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN conta TYPE TEXT;",
-                "ALTER TABLE colaboradores_cadastros ALTER COLUMN chave_pix TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN cpf TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN rg TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN telefone TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN agencia TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN conta TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE funcionarios_base ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE diaristas_lancamentos ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE recibos ALTER COLUMN cpf_diarista TYPE TEXT;",
                 "ALTER TABLE recibos ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE funcionarios_base ADD COLUMN IF NOT EXISTS data_entrada VARCHAR(20);",
+                """
+                DO $$
+                BEGIN
+                    IF to_regclass('public.colaboradores_cadastros') IS NOT NULL THEN
+                        -- Preserva exclusivamente o cadastro solicitado e seus anexos.
+                        INSERT INTO pessoas_fisicas_cadastros
+                        SELECT * FROM colaboradores_cadastros
+                        WHERE nome_completo ILIKE '%PEDRO ALCANTRA%'
+                        ON CONFLICT (id) DO NOTHING;
+
+                        IF to_regclass('public.documentos_colaboradores') IS NOT NULL THEN
+                            INSERT INTO documentos_pessoas_fisicas
+                            SELECT d.* FROM documentos_colaboradores d
+                            INNER JOIN colaboradores_cadastros c ON c.id = d.colaborador_id
+                            WHERE c.nome_completo ILIKE '%PEDRO ALCANTRA%'
+                            ON CONFLICT (id) DO NOTHING;
+                            DROP TABLE documentos_colaboradores;
+                        END IF;
+
+                        DROP TABLE colaboradores_cadastros;
+                    END IF;
+                END $$;
+                """,
                 """
                 CREATE TABLE IF NOT EXISTS registro_funcionarios (
                     id VARCHAR PRIMARY KEY,
