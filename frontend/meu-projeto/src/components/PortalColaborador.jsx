@@ -368,10 +368,7 @@ export default function PortalColaborador({ user, onLogout }) {
                   id="btn-recibo-individual"
                   onClick={() => {
                     setSelectedDiaristaForRecibo(null);
-                    // O recibo sempre parte da lista: o usuário escolhe o
-                    // diarista e, no botão "Recibo" da respectiva linha,
-                    // abre o documento já com os dados preenchidos.
-                    setActiveModule('relacao');
+                    setActiveModule('recibo');
                   }}
                   className="group bg-white hover:bg-red-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
                 >
