@@ -31,8 +31,8 @@ class ColaboradorCadastro(Base):
     banco = Column(String(100), nullable=False)
     outro_banco = Column(String(100), nullable=True)
     tipo_conta = Column(String(50), nullable=False)
-    agencia = Column(Text, nullable=False)
-    conta = Column(Text, nullable=False)
+    agencia = Column(Text, nullable=True)
+    conta = Column(Text, nullable=True)
     tipo_pix = Column(String(30), nullable=False)
     chave_pix = Column(Text, nullable=False)
 

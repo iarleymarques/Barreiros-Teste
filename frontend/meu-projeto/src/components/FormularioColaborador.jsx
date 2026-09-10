@@ -730,17 +730,13 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     }
 
     if (field === 'agencia') {
-      if (!value.trim()) {
-        errorMsg = 'Agência é obrigatória';
-      } else if (value.replace(/[^0-9xX]/g, '').length < 2) {
+      if (value.trim() && value.replace(/[^0-9xX]/g, '').length < 2) {
         errorMsg = 'Informe uma agência válida (mínimo 2 dígitos)';
       }
     }
 
     if (field === 'conta') {
-      if (!value.trim()) {
-        errorMsg = 'Conta com dígito é obrigatória';
-      } else if (value.replace(/[^0-9xX]/g, '').length < 3) {
+      if (value.trim() && value.replace(/[^0-9xX]/g, '').length < 3) {
         errorMsg = 'Informe a conta completa com dígito';
       }
     }
@@ -936,17 +932,17 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       }
       newTouched.chavePix = true;
 
-      if (!validateField('agencia', formData.agencia)) {
-        newErrors.agencia = !formData.agencia ? 'Agência é obrigatória' : 'Informe uma agência válida';
+      if (formData.agencia && !validateField('agencia', formData.agencia)) {
+        newErrors.agencia = 'Informe uma agência válida';
         valid = false;
       }
-      newTouched.agencia = true;
+      newTouched.agencia = !!formData.agencia;
 
-      if (!validateField('conta', formData.conta)) {
-        newErrors.conta = !formData.conta ? 'Conta com dígito é obrigatória' : 'Informe a conta completa com dígito';
+      if (formData.conta && !validateField('conta', formData.conta)) {
+        newErrors.conta = 'Informe a conta completa com dígito';
         valid = false;
       }
-      newTouched.conta = true;
+      newTouched.conta = !!formData.conta;
 
       if (formData.banco === 'Outro') {
         if (!validateField('outroBanco', formData.outroBanco)) {
@@ -2545,7 +2541,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
                         <div>
                           <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            Agência <span className="text-red-600 font-black">*</span>
+                            Agência <span className="text-zinc-400 font-medium normal-case">(opcional)</span>
                           </label>
                           <input
                             type="text"
@@ -2570,7 +2566,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
                         <div>
                           <label className="block text-xs font-extrabold uppercase text-zinc-900 tracking-wide mb-1.5">
-                            Conta com Dígito <span className="text-red-600 font-black">*</span>
+                            Conta com Dígito <span className="text-zinc-400 font-medium normal-case">(opcional)</span>
                           </label>
                           <input
                             type="text"

@@ -32,6 +32,8 @@ def init_db():
                 "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN telefone TYPE TEXT;",
                 "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN agencia TYPE TEXT;",
                 "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN conta TYPE TEXT;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN agencia DROP NOT NULL;",
+                "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN conta DROP NOT NULL;",
                 "ALTER TABLE pessoas_fisicas_cadastros ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE funcionarios_base ALTER COLUMN chave_pix TYPE TEXT;",
                 "ALTER TABLE diaristas_lancamentos ALTER COLUMN chave_pix TYPE TEXT;",

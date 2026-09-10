@@ -19,8 +19,8 @@ class ColaboradorCreate(BaseModel):
     banco: str
     outro_banco: Optional[str] = None
     tipo_conta: str
-    agencia: str
-    conta: str
+    agencia: Optional[str] = None
+    conta: Optional[str] = None
     tipo_pix: str
     chave_pix: str
     cargo: str
