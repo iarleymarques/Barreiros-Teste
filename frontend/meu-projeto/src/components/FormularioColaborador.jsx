@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toCanvas } from 'html-to-image';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { baixarDocumentoColaboradorApi, createColaboradorApi, getDocumentosColaboradorApi } from '../services/api';
@@ -255,7 +255,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Captura via html2canvas com renderização em layout A4 padrão de 800px
-      const canvas = await html2canvas(element, {
+      if (false) { const canvas = await html2canvas(element, {
         scale: 2.5, // Alta definição (nítido para impressão)
         useCORS: true,
         logging: false,
@@ -316,6 +316,27 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           clonedEl.style.height = 'auto';
           clonedEl.style.minHeight = 'unset';
         }
+      }); }
+
+      // Diferente do html2canvas, esta biblioteca não tenta interpretar
+      // oklch(): o próprio navegador desenha as cores modernas do Tailwind.
+      const canvas = await toCanvas(element, {
+        pixelRatio: 2.5,
+        backgroundColor: '#ffffff',
+        cacheBust: true,
+        width: 800,
+        style: {
+          width: '800px',
+          maxWidth: '800px',
+          minWidth: '800px',
+          margin: '0 auto',
+          boxShadow: 'none',
+          borderRadius: '0px',
+          border: 'none',
+          padding: '20px 22px',
+          height: 'auto',
+          minHeight: 'unset',
+        },
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.98);
