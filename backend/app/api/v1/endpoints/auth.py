@@ -30,12 +30,17 @@ def login(login_data: LoginRequest, request: Request, response: Response, db: Se
         raise credenciais_invalidas
             
     token = create_access_token(subject=user.id)
+    # Frontend e backend usam domínios públicos distintos no Railway. Para o
+    # navegador enviar a sessão nas chamadas fetch entre eles, o cookie precisa
+    # permitir contexto cross-site em produção. Continua protegido por HTTPS e
+    # inacessível ao JavaScript.
+    is_production = settings.ENVIRONMENT != "development"
     response.set_cookie(
         key="barreiro_session",
         value=token,
         httponly=True,
-        secure=settings.ENVIRONMENT != "development",
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=8 * 60 * 60,
         path="/",
     )
