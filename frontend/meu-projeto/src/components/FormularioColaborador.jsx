@@ -262,6 +262,32 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         backgroundColor: '#ffffff',
         windowWidth: 1024,
         onclone: (clonedDoc, clonedEl) => {
+          // O html2canvas ainda não reconhece oklch()/color-mix(), usados pelo
+          // Tailwind v4. Sobrescrevemos as cores da cópia com valores RGB antes
+          // da captura, sem alterar a tela exibida ao usuário.
+          const pdfColors = clonedDoc.createElement('style');
+          pdfColors.textContent = `
+            :root {
+              --color-white: #ffffff;
+              --color-black: #000000;
+              --color-zinc-50: #fafafa; --color-zinc-100: #f4f4f5;
+              --color-zinc-200: #e4e4e7; --color-zinc-300: #d4d4d8;
+              --color-zinc-400: #a1a1aa; --color-zinc-500: #71717a;
+              --color-zinc-600: #52525b; --color-zinc-700: #3f3f46;
+              --color-zinc-800: #27272a; --color-zinc-900: #18181b;
+              --color-zinc-950: #09090b;
+              --color-red-50: #fef2f2; --color-red-100: #fee2e2;
+              --color-red-200: #fecaca; --color-red-400: #f87171;
+              --color-red-600: #dc2626; --color-red-700: #b91c1c;
+              --color-emerald-50: #ecfdf5; --color-emerald-100: #d1fae5;
+              --color-emerald-600: #059669; --color-emerald-800: #065f46;
+            }
+            [data-pdf-root] .bg-zinc-50\\/80 { background-color: #fafafa !important; }
+            [data-pdf-root] .border-zinc-200\\/80 { border-color: #e4e4e7 !important; }
+            [data-pdf-root] .border-black\\/40 { border-color: #000000 !important; }
+          `;
+          clonedDoc.head.appendChild(pdfColors);
+
           // Padroniza o elemento para formato de página A4 sem cortes
           clonedEl.style.width = '800px';
           clonedEl.style.maxWidth = '800px';
