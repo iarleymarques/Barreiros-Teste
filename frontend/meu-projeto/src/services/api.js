@@ -178,6 +178,31 @@ export async function createPessoaJuridicaApi(formData) {
   return await res.json();
 }
 
+export async function getDocumentosPessoaJuridicaApi(id) {
+  const res = await fetch(`${API_BASE_URL}/pessoas-juridicas/${id}/documentos`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Não foi possível carregar os documentos');
+  return await res.json();
+}
+
+export async function enviarDocumentoPessoaJuridicaApi(id, posicao, arquivo) {
+  const dados = new FormData();
+  dados.append('posicao', posicao); dados.append('arquivo', arquivo);
+  const res = await fetch(`${API_BASE_URL}/pessoas-juridicas/${id}/documentos`, { method: 'POST', headers: getAuthHeaders(), body: dados });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Não foi possível anexar o documento');
+  return await res.json();
+}
+
+export async function baixarDocumentoPessoaJuridicaApi(id, documentoId) {
+  const res = await fetch(`${API_BASE_URL}/pessoas-juridicas/${id}/documentos/${documentoId}/arquivo`, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Não foi possível abrir o documento');
+  return await res.blob();
+}
+
+export async function removerDocumentoPessoaJuridicaApi(id, documentoId) {
+  const res = await fetch(`${API_BASE_URL}/pessoas-juridicas/${id}/documentos/${documentoId}`, { method: 'DELETE', headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Não foi possível remover o documento');
+}
+
 export async function getDocumentosColaboradorApi(colaboradorId) {
   const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos`, {
     headers: getAuthHeaders(),

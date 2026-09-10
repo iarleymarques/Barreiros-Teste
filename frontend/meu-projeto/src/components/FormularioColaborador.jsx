@@ -5,6 +5,7 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { baixarDocumentoColaboradorApi, createColaboradorApi, createPessoaJuridicaApi, getDocumentosColaboradorApi } from '../services/api';
 import DocumentosPessoaFisica from './DocumentosPessoaFisica';
+import DocumentosPessoaJuridica from './DocumentosPessoaJuridica';
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 import {
@@ -1614,6 +1615,9 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
 
           {formData.tipoPessoa === 'fisica' && (
             <DocumentosPessoaFisica colaboradorId={colaboradorId} />
+          )}
+          {formData.tipoPessoa === 'juridica' && (
+            <DocumentosPessoaJuridica cadastroId={colaboradorId} />
           )}
         </div>
       ) : (

@@ -15,7 +15,8 @@ from app.models import (
     Recibo, 
     ColaboradorCadastro,
     DocumentoColaborador,
-    PessoaJuridicaCadastro
+    PessoaJuridicaCadastro,
+    DocumentoPessoaJuridica
 )
 
 # Inicializa as tabelas no banco de dados PostgreSQL (Barreiro) automaticamente na inicialização
