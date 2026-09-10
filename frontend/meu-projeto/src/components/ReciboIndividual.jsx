@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getDiaristasApi, emitirReciboApi } from '../services/api';
 import {
   FileText,
@@ -100,6 +100,16 @@ function getDiasMes(dataISO) {
   return dias;
 }
 
+function normalizarNome(nome) {
+  return (nome || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR');
+}
+
+function valorDoLancamento(lancamento) {
+  if (lancamento.valor_total != null) return parseFloat(lancamento.valor_total) || 0;
+  return (parseFloat(lancamento.valor_diaria ?? lancamento.valor) || 0)
+    * (parseInt(lancamento.quantidade_diarias ?? lancamento.diarias, 10) || 1);
+}
+
 // ─── Componente de Impressão ───────────────────────────────────────────────────
 
 function ReciboImpressao({ tipo, nome, cpf, pix, total, dataEmissao, empresa, numeroRecibo }) {
@@ -193,6 +203,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   });
 
   const [diaristaId, setDiaristaId] = useState(null);
+  const [pessoaSelecionada, setPessoaSelecionada] = useState('');
   const [copiadoPix, setCopiadoPix] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [reciboSalvo, setReciboSalvo] = useState(null);
@@ -200,13 +211,14 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   const [mensagemErro, setMensagemErro] = useState('');
 
   // Dias com valores buscados do banco para o período
-  const [diasPeriodo, setDiasPeriodo] = useState([]); // [{ data: 'YYYY-MM-DD', valor: number }]
+  const [lancamentosPeriodo, setLancamentosPeriodo] = useState([]);
   const [carregandoDias, setCarregandoDias] = useState(false);
 
   // Preenche form com diarista inicial vindo da relação
   useEffect(() => {
     if (diaristaInicial) {
       setDiaristaId(diaristaInicial.id);
+      setPessoaSelecionada(normalizarNome(diaristaInicial.nome));
       setReciboSalvo(null);
       setForm(prev => ({
         ...prev,
@@ -223,13 +235,9 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   useEffect(() => {
     buscarDiasPeriodo();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tipoRecibo, form.dataRef, form.nome]);
+  }, [tipoRecibo, form.dataRef]);
 
   async function buscarDiasPeriodo() {
-    if (!form.nome && !diaristaId) {
-      setDiasPeriodo([]);
-      return;
-    }
     setCarregandoDias(true);
     try {
       let diasISO = [];
@@ -280,7 +288,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
         valor: mapaValores[data] || 0,
       }));
 
-      setDiasPeriodo(lista);
+      setLancamentosPeriodo(dadosBanco);
     } catch (err) {
       console.warn('Erro ao buscar dias do período:', err);
       // Fallback: usa valor unitário do form
@@ -288,7 +296,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
       if (tipoRecibo === 'diaria') diasISO = [form.dataRef];
       else if (tipoRecibo === 'semanal') diasISO = getSemana(form.dataRef).dias;
       else diasISO = getDiasMes(form.dataRef);
-      setDiasPeriodo(diasISO.map(data => ({ data, valor: 0 })));
+      setLancamentosPeriodo([]);
     } finally {
       setCarregandoDias(false);
     }
@@ -300,32 +308,59 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   }
 
   function handleSelecionarDiarista(e) {
-    const id = e.target.value;
-    if (!id) return;
-    const sel = diaristas.find(d => d.id === id);
+    const chave = e.target.value;
+    if (!chave) return;
+    const sel = diaristasDoPeriodo.find(d => d.chave === chave);
     if (sel) {
       setDiaristaId(sel.id);
+      setPessoaSelecionada(chave);
       setReciboSalvo(null);
       setForm(prev => ({
         ...prev,
         nome: sel.nome || '',
-        cpf: sel.tipoPix === 'cpf' ? sel.pix : (sel.cpf || prev.cpf),
-        pix: sel.pix || sel.chavePix || prev.pix || '',
-        valorUnitario: parseFloat(sel.valor) || 120.0,
-        dataRef: sel.data || prev.dataRef,
+        cpf: sel.cpf || prev.cpf,
+        pix: sel.pix || prev.pix || '',
+        valorUnitario: parseFloat(sel.valor) || 0,
       }));
     }
   }
 
   // Total calculado com base nos dias que têm valor
-  const diasComValor = diasPeriodo;
+  const diaristasDoPeriodo = useMemo(() => {
+    const agrupados = new Map();
+    lancamentosPeriodo.forEach(d => {
+      const chave = normalizarNome(d.nome);
+      if (!chave) return;
+      const atual = agrupados.get(chave);
+      const valor = valorDoLancamento(d);
+      agrupados.set(chave, atual
+        ? { ...atual, total: atual.total + valor, valor: atual.total + valor, diarias: 1 }
+        : { chave, id: d.id, nome: d.nome || '', cpf: d.tipo_pix === 'cpf' ? d.chave_pix : (d.cpf || ''), pix: d.chave_pix || d.pix || '', valor, diarias: 1, total: valor });
+    });
+    return [...agrupados.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  }, [lancamentosPeriodo]);
+
+  const diasComValor = useMemo(() => {
+    const dias = tipoRecibo === 'diaria'
+      ? [form.dataRef]
+      : tipoRecibo === 'semanal'
+        ? getSemana(form.dataRef).dias
+        : getDiasMes(form.dataRef);
+    const pessoa = normalizarNome(form.nome);
+    return dias.map(data => ({
+      data,
+      valor: lancamentosPeriodo
+        .filter(d => d.data === data && normalizarNome(d.nome) === pessoa)
+        .reduce((total, d) => total + valorDoLancamento(d), 0),
+    }));
+  }, [tipoRecibo, form.dataRef, form.nome, lancamentosPeriodo]);
   const totalGeral = diasComValor.reduce((acc, d) => acc + d.valor, 0);
 
   // Se nenhum dia tem valor do banco, usa o valor unitário do form para os dias do período
   const diasParaExibir = (() => {
     const temValorBanco = diasComValor.some(d => d.valor > 0);
     if (temValorBanco) return diasComValor;
-    return diasComValor.map(d => ({ ...d, valor: parseFloat(form.valorUnitario) || 0 }));
+    return diasComValor;
   })();
   const totalExibido = diasParaExibir.reduce((acc, d) => acc + d.valor, 0);
 
@@ -485,7 +520,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
             <div className="border-t border-zinc-100 pt-4 space-y-4">
 
               {/* Selecionar diarista cadastrado */}
-              {diaristas.length > 0 && (
+               {diaristasDoPeriodo.length > 0 && (
                 <div>
                   <label className="block text-xs font-black uppercase text-red-700 mb-2 flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5" />
@@ -493,12 +528,12 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                   </label>
                   <select
                     onChange={handleSelecionarDiarista}
-                    value={diaristaId || ''}
+                     value={pessoaSelecionada}
                     className="w-full px-4 py-3 rounded-2xl border border-red-200 bg-red-50/50 text-sm font-bold text-zinc-800 focus:outline-none focus:ring-2 focus:ring-red-500/20 cursor-pointer"
                   >
                     <option value="" disabled>Selecione um diarista para autopreencher...</option>
-                    {diaristas.map(d => (
-                      <option key={d.id} value={d.id}>
+                     {diaristasDoPeriodo.map(d => (
+                       <option key={d.chave} value={d.chave}>
                         {d.nome} — R$ {((parseFloat(d.valor) || 0) * (d.diarias || 1)).toFixed(2).replace('.', ',')}
                       </option>
                     ))}
