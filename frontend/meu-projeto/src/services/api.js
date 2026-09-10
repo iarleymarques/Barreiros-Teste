@@ -1,7 +1,10 @@
 function sanitizeApiUrl(url) {
-  // The local backend is the safe default during development. A remote
-  // fallback here would authenticate against Railway while Uvicorn is off.
-  if (!url) return 'http://localhost:8000/api/v1';
+  // Localhost é somente o padrão de desenvolvimento. Em produção, a URL
+  // deve ser configurada no Railway antes do build do Vite.
+  if (!url) {
+    const isLocal = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    return isLocal ? 'http://localhost:8000/api/v1' : '';
+  }
   let clean = url.trim();
   // Corrige caso tenha https://https:// ou http://https:// duplicado
   clean = clean.replace(/^(https?:\/\/)+/i, 'https://');
@@ -13,6 +16,13 @@ function sanitizeApiUrl(url) {
 
 const rawApiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = sanitizeApiUrl(rawApiUrl);
+
+function getApiUrl(path) {
+  if (!API_BASE_URL) {
+    throw new Error('API não configurada no Railway. Defina VITE_API_URL no serviço do frontend e faça um novo deploy.');
+  }
+  return `${API_BASE_URL}${path}`;
+}
 
 // A sessão é mantida em cookie HttpOnly; nenhum JWT fica acessível ao JavaScript.
 async function fetch(url, options = {}) {
@@ -60,13 +70,14 @@ function getAuthHeaders(customHeaders = {}) {
 export async function loginApi(email, senha) {
   let res;
   try {
-    res = await fetch(`${API_BASE_URL}/auth/login`, {
+    res = await fetch(getApiUrl('/auth/login'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, senha }),
     });
-  } catch {
-    throw new Error('Nao foi possivel conectar a API local. Inicie o Uvicorn em http://localhost:8000 e tente novamente.');
+  } catch (err) {
+    if (err?.message?.startsWith('API não configurada')) throw err;
+    throw new Error('Não foi possível conectar à API. Verifique se o serviço do backend está ativo no Railway.');
   }
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -83,7 +94,7 @@ export async function getCurrentUserApi() {
   const token = getAuthToken();
   if (!token) throw new Error('Sessao inexistente');
 
-  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+  const res = await fetch(getApiUrl('/auth/me'), {
     headers: getAuthHeaders(),
   });
   if (!res.ok) throw new Error('Sessao invalida ou API indisponivel');

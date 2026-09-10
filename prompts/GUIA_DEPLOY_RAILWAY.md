@@ -72,6 +72,8 @@
 4. Vá para a aba **"Variables"** e adicione:
    ```env
    VITE_API_URL=https://backend-production-xxxx.up.railway.app/api/v1
+
+   > Essa variável é lida durante o build do Vite. Depois de salvar, faça **Redeploy** no serviço do frontend.
    ```
    > ⚠️ **ATENÇÃO:** Substitua pelo link real do seu Backend gerado no Passo 2 e **mantenha `/api/v1` no final**.
 
