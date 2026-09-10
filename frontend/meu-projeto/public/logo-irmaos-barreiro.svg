@@ -1,0 +1,14 @@
+<svg viewBox="10 10 430 190" xmlns="http://www.w3.org/2000/svg">
+  <g transform="skewX(-10) translate(20, 0)">
+    <text x="15" y="146" fill="#18181b" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="148">L</text>
+    <circle cx="152" cy="28" r="14.5" fill="#e51b24"/>
+    <path d="M160 48C146 68 132 96 125 118C117 144 125 156 148 162C175 168 220 162 245 152C218 158 174 158 150 148C136 142 131 130 135 112C141 90 153 66 164 48Z" fill="#e51b24"/>
+    <circle cx="206" cy="108" r="28" fill="#e51b24"/>
+    <path d="M196 40C220 40 258 50 274 76C286 96 285 118 278 136C283 116 280 94 268 74C254 54 226 46 200 46C182 46 174 52 174 52C174 52 186 40 196 40Z" fill="#18181b"/>
+    <text x="275" y="146" fill="#18181b" font-family="Arial Black, Impact, sans-serif" font-weight="900" font-style="italic" font-size="148">G</text>
+  </g>
+  <g transform="translate(15, 160)">
+    <rect width="420" height="28" rx="2" fill="#e51b24"/>
+    <text x="210" y="20" fill="#fff" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-style="italic" font-size="16.5" letter-spacing="6">IRMÃOS BARREIRO</text>
+  </g>
+</svg>

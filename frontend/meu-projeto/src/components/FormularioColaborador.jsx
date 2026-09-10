@@ -103,6 +103,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   const [colaboradorId, setColaboradorId] = useState('');
   const [rascunhoCarregado, setRascunhoCarregado] = useState(false);
   const pdfRef = useRef(null);
+  const logoPdfRef = useRef(null);
 
   // Form State com suporte a Pessoa Física e Pessoa Jurídica (Corporativo)
   const [formData, setFormData] = useState({
@@ -230,7 +231,26 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     }
   }, [chaveRascunho, rascunhoCarregado, formData, currentStep, maxStepReached, isCompleted, colaboradorId, protocolo, dataEmissao]);
 
-  function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG', anexo = {}) {
+  async function obterLogoPdf() {
+    if (logoPdfRef.current) return logoPdfRef.current;
+
+    logoPdfRef.current = await new Promise((resolve, reject) => {
+      const logo = new Image();
+      logo.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 860;
+        canvas.height = 380;
+        const contexto = canvas.getContext('2d');
+        contexto.drawImage(logo, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      logo.onerror = () => reject(new Error('Não foi possível carregar o logotipo corporativo.'));
+      logo.src = '/logo-irmaos-barreiro.svg';
+    });
+    return logoPdfRef.current;
+  }
+
+  async function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG', anexo = {}) {
     const paginaAtual = anexo.paginaAtual || 1;
     const totalPaginas = anexo.totalPaginas || 1;
     const titulo = anexo.titulo || 'Documento anexado';
@@ -246,19 +266,12 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     const posicaoX = areaDocumento.x + (areaDocumento.largura - largura) / 2;
     const posicaoY = areaDocumento.y + (areaDocumento.altura - altura) / 2;
 
+    const logoPdf = await obterLogoPdf();
     pdf.addPage();
     pdf.setFillColor(220, 38, 38);
-    pdf.rect(18, 27, 24, 1.4, 'F');
+    // Logo oficial LIG com a faixa "IRMÃOS BARREIRO" preservando a proporção.
+    pdf.addImage(logoPdf, 'PNG', 18, 11.5, 31, 13.7);
     pdf.setTextColor(24, 24, 27);
-    pdf.setFont('helvetica', 'bolditalic');
-    pdf.setFontSize(20);
-    pdf.text('L', 18, 23);
-    pdf.setTextColor(220, 38, 38);
-    pdf.text('i', 26, 23);
-    pdf.setTextColor(24, 24, 27);
-    pdf.text('G', 30, 23);
-    pdf.setFillColor(220, 38, 38);
-    pdf.circle(27.4, 14, 1.2, 'F');
     pdf.setFontSize(10.5);
     pdf.text('DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS', 45, 18);
     pdf.setFont('helvetica', 'normal');
@@ -354,7 +367,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
             canvasAnexo.width = viewport.width;
             canvasAnexo.height = viewport.height;
             await pagina.render({ canvasContext: canvasAnexo.getContext('2d'), viewport }).promise;
-            adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height, 'JPEG', {
+            await adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height, 'JPEG', {
               titulo: titulos[documento.tipo_documento],
               nomeArquivo,
               paginaAtual: paginaNumero,
@@ -370,7 +383,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           }
         } else {
           const imagem = await lerImagem(arquivo);
-          adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato, {
+          await adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato, {
             titulo: titulos[documento.tipo_documento],
             nomeArquivo,
           });
