@@ -285,6 +285,21 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
             [data-pdf-root] .bg-zinc-50\\/80 { background-color: #fafafa !important; }
             [data-pdf-root] .border-zinc-200\\/80 { border-color: #e4e4e7 !important; }
             [data-pdf-root] .border-black\\/40 { border-color: #000000 !important; }
+            /* Evita que qualquer cor computada em oklch chegue ao html2canvas. */
+            [data-pdf-root], [data-pdf-root] * {
+              color: #18181b !important;
+              background-color: #ffffff !important;
+              background-image: none !important;
+              border-color: #e4e4e7 !important;
+              box-shadow: none !important;
+              text-shadow: none !important;
+              outline-color: #18181b !important;
+            }
+            [data-pdf-root] .text-red-600 { color: #dc2626 !important; }
+            [data-pdf-root] .text-emerald-800 { color: #065f46 !important; }
+            [data-pdf-root] .bg-zinc-50, [data-pdf-root] .bg-zinc-50\\/80 { background-color: #fafafa !important; }
+            [data-pdf-root] .border-red-600 { border-color: #dc2626 !important; }
+            [data-pdf-root] .border-black { border-color: #000000 !important; }
           `;
           clonedDoc.head.appendChild(pdfColors);
 
