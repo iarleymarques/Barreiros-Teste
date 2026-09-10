@@ -56,10 +56,8 @@ def init_db():
                             INNER JOIN colaboradores_cadastros c ON c.id = d.colaborador_id
                             WHERE c.nome_completo ILIKE '%PEDRO ALCANTRA%'
                             ON CONFLICT (id) DO NOTHING;
-                            DROP TABLE documentos_colaboradores;
                         END IF;
 
-                        DROP TABLE colaboradores_cadastros;
                     END IF;
                 END $$;
                 """,
@@ -83,7 +81,6 @@ def init_db():
                         SET funcao = COALESCE(NULLIF(funcao, ''), profissao)
                         WHERE funcao IS NULL OR funcao = '';
                         
-                        ALTER TABLE registro_funcionarios DROP COLUMN profissao;
                     END IF;
                 END $$;
                 """
@@ -99,10 +96,10 @@ def init_db():
         db = SessionLocal()
         try:
             # Usuário Padrão para Login com Senha Hashada (BCrypt) caso o banco seja 100% novo
-            if db.query(Usuario).count() == 0:
+            if settings.ENVIRONMENT == "development" and os.getenv("DEVELOPMENT_SEED_PASSWORD") and db.query(Usuario).count() == 0:
                 user_padrao = Usuario(
                     email="colaborador@irmaosbarreiro.com.br",
-                    senha=get_password_hash("123")
+                    senha=get_password_hash(os.environ["DEVELOPMENT_SEED_PASSWORD"])
                 )
                 db.add(user_padrao)
                 db.commit()
@@ -124,18 +121,19 @@ app = FastAPI(
 # Configuração flexível e segura de CORS para comunicação com o Frontend
 env_origins = os.getenv("ALLOWED_ORIGINS", "")
 custom_origins = [o.strip() for o in env_origins.split(",") if o.strip()]
-ALLOWED_ORIGINS = list(set([
+development_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://distribuidorairmaosbarreiros.up.railway.app"
-] + custom_origins))
+]
+ALLOWED_ORIGINS = list(set(custom_origins or (
+    development_origins if settings.ENVIRONMENT == "development" else []
+)))
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.up\.railway\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

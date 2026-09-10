@@ -1,15 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import verify_password, create_access_token
 from app.models.usuario import Usuario
 from app.schemas.auth import LoginRequest, Token, UserOut
 from app.api.deps import get_current_user
+from app.core.rate_limit import enforce_rate_limit
+from app.core.config import settings
 
 router = APIRouter()
 
 @router.post("/login", response_model=Token)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+def login(login_data: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    enforce_rate_limit(request, "login", limit=5, window_seconds=900)
     email_clean = login_data.email.strip()
     user = db.query(Usuario).filter(Usuario.email.ilike(email_clean)).first()
     
@@ -26,9 +29,18 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     if not verify_password(login_data.senha, user.senha):
         raise credenciais_invalidas
             
-    access_token = create_access_token(subject=user.id)
+    token = create_access_token(subject=user.id)
+    response.set_cookie(
+        key="barreiro_session",
+        value=token,
+        httponly=True,
+        secure=settings.ENVIRONMENT != "development",
+        samesite="lax",
+        max_age=8 * 60 * 60,
+        path="/",
+    )
     return {
-        "access_token": access_token,
+        "access_token": "",
         "token_type": "bearer",
         "user": UserOut.model_validate(user)
     }

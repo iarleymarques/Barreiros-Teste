@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 import os
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.encryption import encrypt_val, decrypt_val, encrypt_bytes, decrypt_bytes
@@ -12,6 +12,7 @@ from app.models.usuario import Usuario
 from app.schemas.colaborador import ColaboradorCreate, ColaboradorOut, StatusUpdate
 from app.services.protocolo import gerar_protocolo
 from app.api.deps import get_current_user
+from app.core.rate_limit import enforce_rate_limit
 
 router = APIRouter()
 
@@ -23,6 +24,17 @@ TIPOS_DOCUMENTO_PERMITIDOS = {
 }
 CONTENT_TYPES_PERMITIDOS = {"application/pdf", "image/jpeg", "image/png"}
 TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024
+
+
+def _validar_conteudo_documento(conteudo: bytes, content_type: str) -> None:
+    assinaturas = {
+        "application/pdf": b"%PDF-",
+        "image/jpeg": b"\xff\xd8\xff",
+        "image/png": b"\x89PNG\r\n\x1a\n",
+    }
+    assinatura = assinaturas.get(content_type)
+    if not assinatura or not conteudo.startswith(assinatura):
+        raise HTTPException(status_code=400, detail="O conteúdo do arquivo não corresponde ao tipo informado")
 
 
 def _obter_colaborador_ou_404(colaborador_id: str, db: Session):
@@ -54,7 +66,8 @@ def _descriptografar_colaborador(col):
     return col
 
 @router.post("", response_model=ColaboradorOut, status_code=status.HTTP_201_CREATED)
-def criar_cadastro_colaborador(dados: ColaboradorCreate, db: Session = Depends(get_db)):
+def criar_cadastro_colaborador(dados: ColaboradorCreate, request: Request, db: Session = Depends(get_db)):
+    enforce_rate_limit(request, "cadastro-colaborador", limit=10, window_seconds=3600)
     protocolo = gerar_protocolo()
     agora_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
@@ -156,6 +169,7 @@ async def enviar_documento(
         raise HTTPException(status_code=400, detail="O arquivo enviado esta vazio")
     if len(conteudo) > TAMANHO_MAXIMO_DOCUMENTO:
         raise HTTPException(status_code=400, detail="O arquivo deve ter no maximo 10 MB")
+    _validar_conteudo_documento(conteudo, arquivo.content_type)
 
     nome_arquivo = os.path.basename(arquivo.filename or "documento").replace('"', '').replace('\r', '').replace('\n', '')[:255]
     documento = (
@@ -206,7 +220,7 @@ def baixar_documento(
     return Response(
         content=decrypt_bytes(documento.arquivo),
         media_type=documento.content_type,
-        headers={"Content-Disposition": f'inline; filename="{documento.nome_arquivo}"'},
+        headers={"Content-Disposition": f'attachment; filename="{documento.nome_arquivo}"', "X-Content-Type-Options": "nosniff"},
     )
 
 

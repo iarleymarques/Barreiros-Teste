@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -10,6 +10,7 @@ from app.models.pessoa_juridica import PessoaJuridicaCadastro
 from app.models.usuario import Usuario
 from app.schemas.pessoa_juridica import PessoaJuridicaCreate, PessoaJuridicaOut
 from app.services.protocolo import gerar_protocolo
+from app.core.rate_limit import enforce_rate_limit
 
 router = APIRouter()
 
@@ -25,7 +26,8 @@ def _descriptografar(item: PessoaJuridicaCadastro):
 
 
 @router.post("", response_model=PessoaJuridicaOut, status_code=status.HTTP_201_CREATED)
-def criar_pessoa_juridica(dados: PessoaJuridicaCreate, db: Session = Depends(get_db)):
+def criar_pessoa_juridica(dados: PessoaJuridicaCreate, request: Request, db: Session = Depends(get_db)):
+    enforce_rate_limit(request, "cadastro-pessoa-juridica", limit=10, window_seconds=3600)
     dados_dict = dados.model_dump()
     for campo in _CAMPOS_CRIPTOGRAFADOS:
         if dados_dict.get(campo):

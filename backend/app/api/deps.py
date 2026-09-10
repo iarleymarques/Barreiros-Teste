@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
@@ -12,6 +12,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 )
 
 def get_current_user(
+    request: Request,
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> Usuario:
@@ -20,6 +21,7 @@ def get_current_user(
         detail="Acesso não autorizado. Token de autenticação inválido ou expirado.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    token = token or request.cookies.get("barreiro_session")
     if not token:
         raise credentials_exception
 

@@ -14,10 +14,15 @@ function sanitizeApiUrl(url) {
 const rawApiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = sanitizeApiUrl(rawApiUrl);
 
+// A sessão é mantida em cookie HttpOnly; nenhum JWT fica acessível ao JavaScript.
+async function fetch(url, options = {}) {
+  return window.fetch(url, { ...options, credentials: 'include' });
+}
+
 // Gerenciamento seguro do Token JWT
 export function getAuthToken() {
   try {
-    return sessionStorage.getItem('token_barreiro') || '';
+    return '';
   } catch {
     return '';
   }
@@ -26,9 +31,9 @@ export function getAuthToken() {
 export function setAuthToken(token) {
   try {
     if (token) {
-      sessionStorage.setItem('token_barreiro', token);
+      return;
     } else {
-      sessionStorage.removeItem('token_barreiro');
+      return;
     }
   } catch (err) {
     console.warn('Falha ao salvar token na sessão:', err);
@@ -37,7 +42,7 @@ export function setAuthToken(token) {
 
 export function removeAuthToken() {
   try {
-    sessionStorage.removeItem('token_barreiro');
+    return;
   } catch (err) {
     console.warn('Falha ao remover token da sessão:', err);
   }
@@ -68,9 +73,8 @@ export async function loginApi(email, senha) {
     throw new Error(errorData.detail || 'Erro ao realizar login');
   }
   const data = await res.json();
-  if (data && data.access_token) {
-    setAuthToken(data.access_token);
-  }
+  // Remove qualquer token legado do sessionStorage; a sessão atual está no cookie HttpOnly.
+  setAuthToken('');
   return data;
 }
 
