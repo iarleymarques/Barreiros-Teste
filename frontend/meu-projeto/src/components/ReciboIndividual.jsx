@@ -59,6 +59,10 @@ function formatarDataBR(dataISO) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function formatarDataRecibo(dataISO) {
+  return dataISO ? formatarDataBR(dataISO) : 'Data não informada';
+}
+
 function formatarDataPorExtenso(dataStr) {
   const str = dataStr || getHojeISO();
   try {
@@ -336,6 +340,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
         nome: d.nome || '',
         cpf: d.tipo_pix === 'cpf' ? d.chave_pix : (d.cpf || ''),
         pix: d.chave_pix || d.pix || '',
+        data: d.data,
         valor: d.valor_diaria ?? d.valor ?? 0,
         diarias: d.quantidade_diarias ?? d.diarias ?? 1,
         total: valorDoLancamento(d),
@@ -553,7 +558,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                     <option value="" disabled>Selecione um diarista para autopreencher...</option>
                      {diaristasDoPeriodo.map(d => (
                        <option key={d.chave} value={d.chave}>
-                        {d.nome} — R$ {((parseFloat(d.valor) || 0) * (d.diarias || 1)).toFixed(2).replace('.', ',')}
+                         {d.nome} — R$ {((parseFloat(d.valor) || 0) * (d.diarias || 1)).toFixed(2).replace('.', ',')}{tipoRecibo === 'diaria' ? ` — ${formatarDataRecibo(d.data)}` : ''}
                       </option>
                     ))}
                   </select>
