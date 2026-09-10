@@ -186,13 +186,62 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   });
 
   // Geração do PDF em formato oficial A4 com html2canvas + jsPDF
-  function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG') {
-    const margem = 10;
-    const escala = Math.min((210 - margem * 2) / larguraImagem, (297 - margem * 2) / alturaImagem);
+  function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG', anexo = {}) {
+    const paginaAtual = anexo.paginaAtual || 1;
+    const totalPaginas = anexo.totalPaginas || 1;
+    const titulo = anexo.titulo || 'Documento anexado';
+    const nomeArquivo = anexo.nomeArquivo || 'Arquivo digitalizado';
+    const protocoloDocumento = protocolo || 'Em processamento';
+    const areaDocumento = { x: 16, y: 49, largura: 178, altura: 218 };
+    const escala = Math.min(
+      areaDocumento.largura / larguraImagem,
+      areaDocumento.altura / alturaImagem,
+    );
     const largura = larguraImagem * escala;
     const altura = alturaImagem * escala;
+    const posicaoX = areaDocumento.x + (areaDocumento.largura - largura) / 2;
+    const posicaoY = areaDocumento.y + (areaDocumento.altura - altura) / 2;
+
     pdf.addPage();
-    pdf.addImage(imagem, formato, (210 - largura) / 2, (297 - altura) / 2, largura, altura, undefined, 'FAST');
+    pdf.setFillColor(220, 38, 38);
+    pdf.rect(10, 10, 4, 27, 'F');
+    pdf.setTextColor(24, 24, 27);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(17);
+    pdf.text('LIG', 18, 21);
+    pdf.setFontSize(10.5);
+    pdf.text('DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS', 45, 18);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(82, 82, 91);
+    pdf.text('Anexo do Comprovante Oficial de Cadastro', 45, 24);
+    pdf.text(`Protocolo: ${protocoloDocumento}`, 45, 30);
+    pdf.setDrawColor(220, 38, 38);
+    pdf.setLineWidth(0.5);
+    pdf.line(10, 39, 200, 39);
+
+    pdf.setTextColor(24, 24, 27);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text(titulo.toUpperCase(), 16, 45);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(82, 82, 91);
+    pdf.text(`Arquivo: ${nomeArquivo}`, 16, 272);
+    pdf.text(`Página digitalizada ${paginaAtual} de ${totalPaginas}`, 194, 272, { align: 'right' });
+
+    pdf.setDrawColor(212, 212, 216);
+    pdf.setLineWidth(0.35);
+    pdf.roundedRect(14, 47, 182, 222, 1.5, 1.5, 'S');
+    pdf.addImage(imagem, formato, posicaoX, posicaoY, largura, altura, undefined, 'FAST');
+
+    pdf.setDrawColor(228, 228, 231);
+    pdf.line(10, 281, 200, 281);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7);
+    pdf.setTextColor(113, 113, 122);
+    pdf.text('Distribuidora Irmãos Barreiro de Bebidas • Documento Oficial', 10, 286);
+    pdf.text('Anexo digitalizado vinculado ao cadastro', 200, 286, { align: 'right' });
   }
 
   function lerImagem(blob) {
@@ -210,6 +259,12 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     const ordem = ['ficha_assinada', 'identidade', 'comprovante_residencia', 'comprovante_bancario'];
     const documentos = await getDocumentosColaboradorApi(colaboradorId);
     documentos.sort((a, b) => ordem.indexOf(a.tipo_documento) - ordem.indexOf(b.tipo_documento));
+    const titulos = {
+      ficha_assinada: 'Ficha cadastral assinada',
+      identidade: 'Documento de identidade',
+      comprovante_residencia: 'Comprovante de residência',
+      comprovante_bancario: 'Comprovante bancário',
+    };
     for (const documento of documentos) {
       try {
         const arquivo = await baixarDocumentoColaboradorApi(colaboradorId, documento.id);
@@ -226,12 +281,20 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
             canvasAnexo.width = viewport.width;
             canvasAnexo.height = viewport.height;
             await pagina.render({ canvasContext: canvasAnexo.getContext('2d'), viewport }).promise;
-            adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height);
+            adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height, 'JPEG', {
+              titulo: titulos[documento.tipo_documento],
+              nomeArquivo,
+              paginaAtual: paginaNumero,
+              totalPaginas: pdfAnexado.numPages,
+            });
           }
           pdfAnexado.destroy();
         } else {
           const imagem = await lerImagem(arquivo);
-          adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato);
+          adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato, {
+            titulo: titulos[documento.tipo_documento],
+            nomeArquivo,
+          });
           URL.revokeObjectURL(imagem.url);
         }
       } catch (erro) {
