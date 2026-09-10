@@ -218,7 +218,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
   useEffect(() => {
     if (diaristaInicial) {
       setDiaristaId(diaristaInicial.id);
-      setPessoaSelecionada(normalizarNome(diaristaInicial.nome));
+      setPessoaSelecionada(diaristaInicial.id);
       setReciboSalvo(null);
       setForm(prev => ({
         ...prev,
@@ -327,6 +327,21 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
 
   // Total calculado com base nos dias que têm valor
   const diaristasDoPeriodo = useMemo(() => {
+    // No recibo diário, cada lançamento do dia é uma opção independente.
+    // Assim, a mesma pessoa pode ter valores diferentes no mesmo dia.
+    if (tipoRecibo === 'diaria') {
+      return lancamentosPeriodo.map(d => ({
+        chave: d.id,
+        id: d.id,
+        nome: d.nome || '',
+        cpf: d.tipo_pix === 'cpf' ? d.chave_pix : (d.cpf || ''),
+        pix: d.chave_pix || d.pix || '',
+        valor: d.valor_diaria ?? d.valor ?? 0,
+        diarias: d.quantidade_diarias ?? d.diarias ?? 1,
+        total: valorDoLancamento(d),
+      })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    }
+
     const agrupados = new Map();
     lancamentosPeriodo.forEach(d => {
       const chave = normalizarNome(d.nome);
@@ -338,7 +353,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
         : { chave, id: d.id, nome: d.nome || '', cpf: d.tipo_pix === 'cpf' ? d.chave_pix : (d.cpf || ''), pix: d.chave_pix || d.pix || '', valor, diarias: 1, total: valor });
     });
     return [...agrupados.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  }, [lancamentosPeriodo]);
+  }, [tipoRecibo, lancamentosPeriodo]);
 
   const diasComValor = useMemo(() => {
     const dias = tipoRecibo === 'diaria'
@@ -350,10 +365,14 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
     return dias.map(data => ({
       data,
       valor: lancamentosPeriodo
-        .filter(d => d.data === data && normalizarNome(d.nome) === pessoa)
+        .filter(d => d.data === data && (
+          tipoRecibo === 'diaria'
+            ? d.id === diaristaId
+            : normalizarNome(d.nome) === pessoa
+        ))
         .reduce((total, d) => total + valorDoLancamento(d), 0),
     }));
-  }, [tipoRecibo, form.dataRef, form.nome, lancamentosPeriodo]);
+  }, [tipoRecibo, form.dataRef, form.nome, diaristaId, lancamentosPeriodo]);
   const totalGeral = diasComValor.reduce((acc, d) => acc + d.valor, 0);
 
   // Se nenhum dia tem valor do banco, usa o valor unitário do form para os dias do período
@@ -502,7 +521,7 @@ export default function ReciboIndividual({ diaristaInicial, diaristas = [], onUp
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => { setTipoRecibo(opt.id); setReciboSalvo(null); }}
+                       onClick={() => { setTipoRecibo(opt.id); setPessoaSelecionada(''); setReciboSalvo(null); }}
                       className={`flex flex-col items-center gap-1.5 px-3 py-4 rounded-2xl border-2 text-center transition-all cursor-pointer ${ativo
                           ? 'border-red-500 bg-red-50 text-red-700 shadow-md shadow-red-100'
                           : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
