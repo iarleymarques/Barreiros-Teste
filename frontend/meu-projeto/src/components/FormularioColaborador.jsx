@@ -270,15 +270,16 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     pdf.addPage();
     pdf.setFillColor(220, 38, 38);
     // Logo oficial LIG com a faixa "IRMÃOS BARREIRO" preservando a proporção.
-    pdf.addImage(logoPdf, 'PNG', 18, 11.5, 31, 13.7);
+    pdf.addImage(logoPdf, 'PNG', 18, 11, 31, 13.7);
     pdf.setTextColor(24, 24, 27);
-    pdf.setFontSize(10.5);
-    pdf.text('DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS', 45, 18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text('DISTRIBUIDORA IRMÃOS BARREIRO DE BEBIDAS', 55, 17);
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
+    pdf.setFontSize(7.5);
     pdf.setTextColor(82, 82, 91);
-    pdf.text('Anexo do Comprovante Oficial de Cadastro', 45, 24);
-    pdf.text('Sede: Distrito Industrial, Cascavel - CE', 45, 30);
+    pdf.text('Anexo do Comprovante Oficial de Cadastro', 55, 23);
+    pdf.text('Sede: Distrito Industrial, Cascavel - CE', 55, 29);
     pdf.setDrawColor(228, 228, 231);
     pdf.setLineWidth(0.3);
     pdf.roundedRect(164, 10, 32, 20, 2, 2, 'S');
