@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { getFuncionariosBaseApi } from '../services/api';
+import { getDiaristasApi } from '../services/api';
 import { 
   UserPlus, 
   ArrowLeft, 
@@ -73,22 +73,29 @@ export default function CadastrarDiarista({ onBack, onSave, dataInicial, diarist
   useEffect(() => {
     async function carregarCatalogo() {
       try {
-        const dados = await getFuncionariosBaseApi(termoBusca);
+        const dados = await getDiaristasApi();
         if (dados && Array.isArray(dados)) {
-          setFuncionariosDb(dados.map(f => ({
-            id: f.id,
-            nome: f.nome,
-            profissao: f.profissao,
-            tipoPix: f.tipo_pix || 'cpf',
-            chavePix: f.chave_pix || ''
-          })));
+          const porNome = new Map();
+          dados.forEach((diarista) => {
+            const chave = diarista.nome?.trim().toLowerCase();
+            if (chave && !porNome.has(chave)) {
+              porNome.set(chave, {
+                id: diarista.id,
+                nome: diarista.nome,
+                profissao: diarista.profissao,
+                tipoPix: diarista.tipo_pix || 'cpf',
+                chavePix: diarista.chave_pix || '',
+              });
+            }
+          });
+          setFuncionariosDb([...porNome.values()]);
         }
       } catch (err) {
         console.warn("Backend operando offline...", err);
       }
     }
     carregarCatalogo();
-  }, [termoBusca]);
+  }, []);
 
   // Catálogo de funcionários cadastrados no banco de dados backend
   const bancoCompleto = useMemo(() => {
