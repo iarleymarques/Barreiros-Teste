@@ -1,16 +1,46 @@
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import os
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.encryption import encrypt_val, decrypt_val
+from app.core.encryption import encrypt_val, decrypt_val, encrypt_bytes, decrypt_bytes
 from app.models.colaborador import ColaboradorCadastro
+from app.models.documento_colaborador import DocumentoColaborador
 from app.models.usuario import Usuario
 from app.schemas.colaborador import ColaboradorCreate, ColaboradorOut, StatusUpdate
 from app.services.protocolo import gerar_protocolo
 from app.api.deps import get_current_user
 
 router = APIRouter()
+
+TIPOS_DOCUMENTO_PERMITIDOS = {
+    "ficha_assinada",
+    "identidade",
+    "comprovante_residencia",
+    "comprovante_bancario",
+}
+CONTENT_TYPES_PERMITIDOS = {"application/pdf", "image/jpeg", "image/png"}
+TAMANHO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024
+
+
+def _obter_colaborador_ou_404(colaborador_id: str, db: Session):
+    item = db.query(ColaboradorCadastro).filter(ColaboradorCadastro.id == colaborador_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Ficha cadastral nao encontrada")
+    return item
+
+
+def _resumo_documento(documento: DocumentoColaborador):
+    return {
+        "id": documento.id,
+        "tipo_documento": documento.tipo_documento,
+        "nome_arquivo": documento.nome_arquivo,
+        "content_type": documento.content_type,
+        "tamanho_bytes": documento.tamanho_bytes,
+        "updated_at": documento.updated_at,
+    }
 
 def _descriptografar_colaborador(col):
     if not col:
@@ -89,3 +119,114 @@ def atualizar_status(
     db.commit()
     db.refresh(item)
     return _descriptografar_colaborador(item)
+
+
+@router.get("/{colaborador_id}/documentos")
+def listar_documentos(
+    colaborador_id: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    _obter_colaborador_ou_404(colaborador_id, db)
+    documentos = (
+        db.query(DocumentoColaborador)
+        .filter(DocumentoColaborador.colaborador_id == colaborador_id)
+        .order_by(DocumentoColaborador.updated_at.desc())
+        .all()
+    )
+    return [_resumo_documento(documento) for documento in documentos]
+
+
+@router.post("/{colaborador_id}/documentos", status_code=status.HTTP_201_CREATED)
+async def enviar_documento(
+    colaborador_id: str,
+    tipo_documento: str = Form(...),
+    arquivo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    _obter_colaborador_ou_404(colaborador_id, db)
+    if tipo_documento not in TIPOS_DOCUMENTO_PERMITIDOS:
+        raise HTTPException(status_code=400, detail="Espaco de documento invalido")
+    if arquivo.content_type not in CONTENT_TYPES_PERMITIDOS:
+        raise HTTPException(status_code=400, detail="Envie somente arquivos PDF, JPG ou PNG")
+
+    conteudo = await arquivo.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="O arquivo enviado esta vazio")
+    if len(conteudo) > TAMANHO_MAXIMO_DOCUMENTO:
+        raise HTTPException(status_code=400, detail="O arquivo deve ter no maximo 10 MB")
+
+    nome_arquivo = os.path.basename(arquivo.filename or "documento").replace('"', '').replace('\r', '').replace('\n', '')[:255]
+    documento = (
+        db.query(DocumentoColaborador)
+        .filter(
+            DocumentoColaborador.colaborador_id == colaborador_id,
+            DocumentoColaborador.tipo_documento == tipo_documento,
+        )
+        .first()
+    )
+    if documento:
+        documento.nome_arquivo = nome_arquivo
+        documento.content_type = arquivo.content_type
+        documento.tamanho_bytes = len(conteudo)
+        documento.arquivo = encrypt_bytes(conteudo)
+    else:
+        documento = DocumentoColaborador(
+            colaborador_id=colaborador_id,
+            tipo_documento=tipo_documento,
+            nome_arquivo=nome_arquivo,
+            content_type=arquivo.content_type,
+            tamanho_bytes=len(conteudo),
+            arquivo=encrypt_bytes(conteudo),
+        )
+        db.add(documento)
+    db.commit()
+    db.refresh(documento)
+    return _resumo_documento(documento)
+
+
+@router.get("/{colaborador_id}/documentos/{documento_id}/arquivo")
+def baixar_documento(
+    colaborador_id: str,
+    documento_id: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    documento = (
+        db.query(DocumentoColaborador)
+        .filter(
+            DocumentoColaborador.id == documento_id,
+            DocumentoColaborador.colaborador_id == colaborador_id,
+        )
+        .first()
+    )
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento nao encontrado")
+    return Response(
+        content=decrypt_bytes(documento.arquivo),
+        media_type=documento.content_type,
+        headers={"Content-Disposition": f'inline; filename="{documento.nome_arquivo}"'},
+    )
+
+
+@router.delete("/{colaborador_id}/documentos/{documento_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remover_documento(
+    colaborador_id: str,
+    documento_id: str,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user),
+):
+    documento = (
+        db.query(DocumentoColaborador)
+        .filter(
+            DocumentoColaborador.id == documento_id,
+            DocumentoColaborador.colaborador_id == colaborador_id,
+        )
+        .first()
+    )
+    if not documento:
+        raise HTTPException(status_code=404, detail="Documento nao encontrado")
+    db.delete(documento)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

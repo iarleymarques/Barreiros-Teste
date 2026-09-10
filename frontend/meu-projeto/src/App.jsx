@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import PortalColaborador from './components/PortalColaborador';
@@ -7,7 +7,7 @@ import FuncionamentoSite from './components/FuncionamentoSite';
 import Footer from './components/Footer';
 import PoliticaPrivacidade from './components/PoliticaPrivacidade';
 
-import { getAuthToken, removeAuthToken } from './services/api';
+import { getAuthToken, getCurrentUserApi, removeAuthToken } from './services/api';
 
 function Home({ isLoggedIn, user, onLogin, onLogout }) {
   return (
@@ -54,17 +54,37 @@ function Home({ isLoggedIn, user, onLogin, onLogout }) {
 }
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return Boolean(getAuthToken());
-  });
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('user_barreiro');
-      return saved ? JSON.parse(saved) : (getAuthToken() ? { email: 'colaborador@irmaosbarreiro.com.br' } : null);
-    } catch {
-      return null;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function restoreValidatedSession() {
+      if (!getAuthToken()) return;
+
+      try {
+        const currentUser = await getCurrentUserApi();
+        if (active) {
+          setUser(currentUser);
+          setIsLoggedIn(true);
+        }
+      } catch {
+        // Do not allow an old token to unlock the portal without the API.
+        removeAuthToken();
+        try {
+          sessionStorage.removeItem('user_barreiro');
+        } catch {
+          // Storage is unavailable; there is no session to keep.
+        }
+      }
     }
-  });
+
+    restoreValidatedSession();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function handleLogin(userData) {
     setIsLoggedIn(true);
@@ -124,5 +144,4 @@ function App() {
 }
 
 export default App;
-
 

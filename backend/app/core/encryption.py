@@ -36,3 +36,21 @@ def decrypt_val(val: str) -> str:
         return val
     except Exception as e:
         return val
+
+
+def encrypt_bytes(val: bytes) -> bytes:
+    """Criptografa arquivos sensiveis antes de salva-los no banco."""
+    if not val:
+        return val
+    return _fernet.encrypt(val)
+
+
+def decrypt_bytes(val: bytes) -> bytes:
+    """Descriptografa o arquivo para entrega somente ao usuario autenticado."""
+    if not val:
+        return val
+    try:
+        return _fernet.decrypt(val)
+    except Exception:
+        # Compatibilidade com arquivos salvos antes da criptografia de anexos.
+        return val

@@ -1,5 +1,7 @@
 function sanitizeApiUrl(url) {
-  if (!url) return 'https://distribuidorabarreirosbebidasltda.up.railway.app/api/v1';
+  // The local backend is the safe default during development. A remote
+  // fallback here would authenticate against Railway while Uvicorn is off.
+  if (!url) return 'http://localhost:8000/api/v1';
   let clean = url.trim();
   // Corrige caso tenha https://https:// ou http://https:// duplicado
   clean = clean.replace(/^(https?:\/\/)+/i, 'https://');
@@ -9,7 +11,7 @@ function sanitizeApiUrl(url) {
   return clean;
 }
 
-const rawApiUrl = import.meta.env.VITE_API_URL || 'https://distribuidorabarreirosbebidasltda.up.railway.app/api/v1';
+const rawApiUrl = import.meta.env.VITE_API_URL;
 const API_BASE_URL = sanitizeApiUrl(rawApiUrl);
 
 // Gerenciamento seguro do Token JWT
@@ -51,11 +53,16 @@ function getAuthHeaders(customHeaders = {}) {
 }
 
 export async function loginApi(email, senha) {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha }),
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, senha }),
+    });
+  } catch {
+    throw new Error('Nao foi possivel conectar a API local. Inicie o Uvicorn em http://localhost:8000 e tente novamente.');
+  }
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.detail || 'Erro ao realizar login');
@@ -65,6 +72,18 @@ export async function loginApi(email, senha) {
     setAuthToken(data.access_token);
   }
   return data;
+}
+
+// A browser token is only valid after the configured backend confirms it.
+export async function getCurrentUserApi() {
+  const token = getAuthToken();
+  if (!token) throw new Error('Sessao inexistente');
+
+  const res = await fetch(`${API_BASE_URL}/auth/me`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Sessao invalida ou API indisponivel');
+  return await res.json();
 }
 
 export async function getDiaristasApi(dataIso, mesIso) {
@@ -147,6 +166,46 @@ export async function createColaboradorApi(formData) {
   });
   if (!res.ok) throw new Error('Erro ao cadastrar ficha de colaborador');
   return await res.json();
+}
+
+export async function getDocumentosColaboradorApi(colaboradorId) {
+  const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Nao foi possivel carregar os documentos anexados');
+  return await res.json();
+}
+
+export async function enviarDocumentoColaboradorApi(colaboradorId, tipoDocumento, arquivo) {
+  const dados = new FormData();
+  dados.append('tipo_documento', tipoDocumento);
+  dados.append('arquivo', arquivo);
+  const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: dados,
+  });
+  if (!res.ok) {
+    const erro = await res.json().catch(() => ({}));
+    throw new Error(erro.detail || 'Nao foi possivel anexar o documento');
+  }
+  return await res.json();
+}
+
+export async function baixarDocumentoColaboradorApi(colaboradorId, documentoId) {
+  const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos/${documentoId}/arquivo`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Nao foi possivel abrir o documento');
+  return await res.blob();
+}
+
+export async function removerDocumentoColaboradorApi(colaboradorId, documentoId) {
+  const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos/${documentoId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Nao foi possivel remover o documento');
 }
 
 export async function emitirReciboApi(reciboData) {

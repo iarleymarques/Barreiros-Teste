@@ -1,7 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { createColaboradorApi } from '../services/api';
+import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { baixarDocumentoColaboradorApi, createColaboradorApi, getDocumentosColaboradorApi } from '../services/api';
+import DocumentosPessoaFisica from './DocumentosPessoaFisica';
+
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 import {
   User,
   MapPin,
@@ -94,6 +99,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   const [isCompleted, setIsCompleted] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [colaboradorId, setColaboradorId] = useState('');
   const pdfRef = useRef(null);
 
   // Form State com suporte a Pessoa Física e Pessoa Jurídica (Corporativo)
@@ -180,6 +186,56 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   });
 
   // Geração do PDF em formato oficial A4 com html2canvas + jsPDF
+  function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG') {
+    const margem = 10;
+    const escala = Math.min((210 - margem * 2) / larguraImagem, (297 - margem * 2) / alturaImagem);
+    const largura = larguraImagem * escala;
+    const altura = alturaImagem * escala;
+    pdf.addPage();
+    pdf.addImage(imagem, formato, (210 - largura) / 2, (297 - altura) / 2, largura, altura, undefined, 'FAST');
+  }
+
+  function lerImagem(blob) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const imagem = new Image();
+      imagem.onload = () => resolve({ url, largura: imagem.naturalWidth, altura: imagem.naturalHeight, formato: blob.type === 'image/png' ? 'PNG' : 'JPEG' });
+      imagem.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagem invalida')); };
+      imagem.src = url;
+    });
+  }
+
+  async function adicionarDocumentosAnexados(pdf) {
+    if (formData.tipoPessoa !== 'fisica' || !colaboradorId) return;
+    const ordem = ['ficha_assinada', 'identidade', 'comprovante_residencia', 'comprovante_bancario'];
+    const documentos = await getDocumentosColaboradorApi(colaboradorId);
+    documentos.sort((a, b) => ordem.indexOf(a.tipo_documento) - ordem.indexOf(b.tipo_documento));
+    for (const documento of documentos) {
+      try {
+        const arquivo = await baixarDocumentoColaboradorApi(colaboradorId, documento.id);
+        if (arquivo.type === 'application/pdf') {
+          const pdfAnexado = await getDocument({ data: await arquivo.arrayBuffer() }).promise;
+          for (let paginaNumero = 1; paginaNumero <= pdfAnexado.numPages; paginaNumero += 1) {
+            const pagina = await pdfAnexado.getPage(paginaNumero);
+            const viewport = pagina.getViewport({ scale: 2 });
+            const canvasAnexo = document.createElement('canvas');
+            canvasAnexo.width = viewport.width;
+            canvasAnexo.height = viewport.height;
+            await pagina.render({ canvasContext: canvasAnexo.getContext('2d'), viewport }).promise;
+            adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height);
+          }
+          pdfAnexado.destroy();
+        } else {
+          const imagem = await lerImagem(arquivo);
+          adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato);
+          URL.revokeObjectURL(imagem.url);
+        }
+      } catch (erro) {
+        console.warn(`Nao foi possivel incluir o anexo ${documento.nome_arquivo}:`, erro);
+      }
+    }
+  }
+
   async function handleDownloadPDF() {
     if (!pdfRef.current || isGeneratingPDF) return;
     setIsGeneratingPDF(true);
@@ -295,6 +351,8 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         }
       }
     }
+
+      await adicionarDocumentosAnexados(pdf);
 
       const nomeArquivo = `Ficha_Cadastral_${((formData.tipoPessoa === 'juridica' ? formData.razaoSocial : formData.nome) || 'Cadastro').replace(/[^a-zA-Z0-9]/g, '_')}_${protocolo}.pdf`;
       
@@ -703,7 +761,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       setMaxStepReached((prev) => Math.max(prev, nextStep));
     } else {
       try {
-        await createColaboradorApi({
+        const cadastroCriado = await createColaboradorApi({
           tipo_pessoa: formData.tipoPessoa,
           razao_social: formData.razaoSocial,
           nome_fantasia: formData.nomeFantasia,
@@ -745,6 +803,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           sede: formData.sede,
           aceitou_termos: formData.aceitouTermos
         });
+        setColaboradorId(cadastroCriado.id);
       } catch (err) {
         console.warn("Erro ao salvar no PostgreSQL, continuando com visualização do PDF local...", err);
       }
@@ -1317,6 +1376,10 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                 </div>
               </div>
             </div>
+          )}
+
+          {formData.tipoPessoa === 'fisica' && (
+            <DocumentosPessoaFisica colaboradorId={colaboradorId} />
           )}
         </div>
       ) : (
