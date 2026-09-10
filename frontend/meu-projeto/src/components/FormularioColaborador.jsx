@@ -273,7 +273,16 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         const ehPdf = tipoArquivo.includes('pdf') || nomeArquivo.toLowerCase().endsWith('.pdf');
 
         if (ehPdf) {
-          const pdfAnexado = await getDocument({ data: await arquivo.arrayBuffer() }).promise;
+          // Uint8Array evita que o PDF.js transfira/invalide o ArrayBuffer do
+          // arquivo em alguns navegadores durante a renderização do anexo.
+          const dadosPdf = new Uint8Array(await arquivo.arrayBuffer());
+          const tarefaPdf = getDocument({
+            data: dadosPdf,
+            disableAutoFetch: true,
+            disableStream: true,
+            isEvalSupported: false,
+          });
+          const pdfAnexado = await tarefaPdf.promise;
           for (let paginaNumero = 1; paginaNumero <= pdfAnexado.numPages; paginaNumero += 1) {
             const pagina = await pdfAnexado.getPage(paginaNumero);
             const viewport = pagina.getViewport({ scale: 2 });
@@ -288,7 +297,13 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
               totalPaginas: pdfAnexado.numPages,
             });
           }
-          pdfAnexado.destroy();
+          try {
+            await pdfAnexado.destroy();
+          } catch (erroLimpeza) {
+            // A página já foi inserida; uma falha ao encerrar o worker não deve
+            // impedir o download do PDF final.
+            console.warn('Nao foi possivel encerrar o leitor do PDF anexado:', erroLimpeza);
+          }
         } else {
           const imagem = await lerImagem(arquivo);
           adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato, {
@@ -299,7 +314,8 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         }
       } catch (erro) {
         console.warn(`Nao foi possivel incluir o anexo ${documento.nome_arquivo}:`, erro);
-        throw new Error(`Nao foi possivel incluir o anexo "${documento.nome_arquivo}" no PDF.`);
+        const detalhe = erro?.message ? ` Detalhe: ${erro.message}` : '';
+        throw new Error(`Nao foi possivel incluir o anexo "${documento.nome_arquivo}" no PDF.${detalhe}`);
       }
     }
   }
