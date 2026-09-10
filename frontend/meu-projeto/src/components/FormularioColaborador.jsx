@@ -213,7 +213,11 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     for (const documento of documentos) {
       try {
         const arquivo = await baixarDocumentoColaboradorApi(colaboradorId, documento.id);
-        if (arquivo.type === 'application/pdf') {
+        const nomeArquivo = documento.nome_arquivo || '';
+        const tipoArquivo = (documento.content_type || arquivo.type || '').toLowerCase();
+        const ehPdf = tipoArquivo.includes('pdf') || nomeArquivo.toLowerCase().endsWith('.pdf');
+
+        if (ehPdf) {
           const pdfAnexado = await getDocument({ data: await arquivo.arrayBuffer() }).promise;
           for (let paginaNumero = 1; paginaNumero <= pdfAnexado.numPages; paginaNumero += 1) {
             const pagina = await pdfAnexado.getPage(paginaNumero);
@@ -232,6 +236,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         }
       } catch (erro) {
         console.warn(`Nao foi possivel incluir o anexo ${documento.nome_arquivo}:`, erro);
+        throw new Error(`Nao foi possivel incluir o anexo "${documento.nome_arquivo}" no PDF.`);
       }
     }
   }
@@ -289,8 +294,6 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       const printableHeight = pdfHeight - marginY * 2; // 281mm
 
       // Sempre escala a imagem para caber em 1 página inteira — sem cortes, sem segunda página
-      pdf.addImage(imgData, 'JPEG', marginX, marginY, printableWidth, printableHeight, undefined, 'FAST');
-
       if (false) { // bloco legado PF nunca ativado para PJ
       } else {
         const marginX = 10; // 10mm de margem horizontal
@@ -368,7 +371,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (err) {
       console.error('Erro detalhado ao gerar PDF:', err);
-      window.print();
+      window.alert(err.message || 'Nao foi possivel gerar o PDF com os documentos anexados. Tente novamente.');
     } finally {
       setIsGeneratingPDF(false);
     }
