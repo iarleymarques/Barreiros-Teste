@@ -127,9 +127,14 @@ development_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-ALLOWED_ORIGINS = list(set(custom_origins or (
-    development_origins if settings.ENVIRONMENT == "development" else []
-)))
+# Origem de produção atual do portal. Continua sendo uma lista explícita;
+# valores adicionais podem ser informados em ALLOWED_ORIGINS.
+production_origins = [
+    "https://distribuidorairmaosbarreiros.up.railway.app",
+]
+ALLOWED_ORIGINS = list(set((
+    development_origins if settings.ENVIRONMENT == "development" else production_origins
+) + custom_origins))
 
 app.add_middleware(
     CORSMiddleware,
