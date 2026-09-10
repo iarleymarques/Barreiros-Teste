@@ -3,7 +3,7 @@ import { jsPDF } from 'jspdf';
 import { toCanvas } from 'html-to-image';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { baixarDocumentoColaboradorApi, createColaboradorApi, createPessoaJuridicaApi, getDocumentosColaboradorApi } from '../services/api';
+import { baixarDocumentoColaboradorApi, baixarDocumentoPessoaJuridicaApi, createColaboradorApi, createPessoaJuridicaApi, getDocumentosColaboradorApi, getDocumentosPessoaJuridicaApi } from '../services/api';
 import DocumentosPessoaFisica from './DocumentosPessoaFisica';
 import DocumentosPessoaJuridica from './DocumentosPessoaJuridica';
 
@@ -334,10 +334,15 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   }
 
   async function adicionarDocumentosAnexados(pdf) {
-    if (formData.tipoPessoa !== 'fisica' || !colaboradorId) return;
+    if (!colaboradorId) return;
     const ordem = ['ficha_assinada', 'identidade', 'comprovante_residencia', 'comprovante_bancario'];
-    const documentos = await getDocumentosColaboradorApi(colaboradorId);
-    documentos.sort((a, b) => ordem.indexOf(a.tipo_documento) - ordem.indexOf(b.tipo_documento));
+    const pessoaJuridica = formData.tipoPessoa === 'juridica';
+    const documentos = pessoaJuridica
+      ? await getDocumentosPessoaJuridicaApi(colaboradorId)
+      : await getDocumentosColaboradorApi(colaboradorId);
+    documentos.sort((a, b) => pessoaJuridica
+      ? a.posicao - b.posicao
+      : ordem.indexOf(a.tipo_documento) - ordem.indexOf(b.tipo_documento));
     const titulos = {
       ficha_assinada: 'CPF',
       identidade: 'Documento de identidade',
@@ -346,7 +351,9 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     };
     for (const documento of documentos) {
       try {
-        const arquivo = await baixarDocumentoColaboradorApi(colaboradorId, documento.id);
+        const arquivo = pessoaJuridica
+          ? await baixarDocumentoPessoaJuridicaApi(colaboradorId, documento.id)
+          : await baixarDocumentoColaboradorApi(colaboradorId, documento.id);
         const nomeArquivo = documento.nome_arquivo || '';
         const tipoArquivo = (documento.content_type || arquivo.type || '').toLowerCase();
         const ehPdf = tipoArquivo.includes('pdf') || nomeArquivo.toLowerCase().endsWith('.pdf');
@@ -370,7 +377,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
             canvasAnexo.height = viewport.height;
             await pagina.render({ canvasContext: canvasAnexo.getContext('2d'), viewport }).promise;
             await adicionarImagemComoLauda(pdf, canvasAnexo.toDataURL('image/jpeg', 0.95), canvasAnexo.width, canvasAnexo.height, 'JPEG', {
-              titulo: titulos[documento.tipo_documento],
+              titulo: pessoaJuridica ? `DOCUMENTO ${String(documento.posicao).padStart(2, '0')}` : titulos[documento.tipo_documento],
               nomeArquivo,
               paginaAtual: paginaNumero,
               totalPaginas: pdfAnexado.numPages,
@@ -386,7 +393,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
         } else {
           const imagem = await lerImagem(arquivo);
           await adicionarImagemComoLauda(pdf, imagem.url, imagem.largura, imagem.altura, imagem.formato, {
-            titulo: titulos[documento.tipo_documento],
+            titulo: pessoaJuridica ? `DOCUMENTO ${String(documento.posicao).padStart(2, '0')}` : titulos[documento.tipo_documento],
             nomeArquivo,
           });
           URL.revokeObjectURL(imagem.url);
