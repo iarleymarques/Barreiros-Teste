@@ -314,11 +314,16 @@ def buscar_funcionarios_base(
                 mapa[chave].profissao = func_limpo
 
     # 3. Busca em diaristas_lancamentos
-    diaristas = db.query(DiaristaLancamento).order_by(DiaristaLancamento.created_at.desc()).all()
+    # A data do primeiro lançamento de diária é o início dos pagamentos.
+    # Ordenamos pela data da diária para preencher esse dado no autocomplete.
+    diaristas = db.query(DiaristaLancamento).order_by(DiaristaLancamento.data.asc(), DiaristaLancamento.created_at.asc()).all()
+    primeiras_datas_pagamento = {}
     for d in diaristas:
         nome = (d.nome or "").strip()
         chave = nome.upper()
         if chave:
+            if d.data and chave not in primeiras_datas_pagamento:
+                primeiras_datas_pagamento[chave] = d.data
             prof_limpo = d.profissao or ""
             if chave not in mapa:
                 pix_limpo = decrypt_val(d.chave_pix)
@@ -330,11 +335,17 @@ def buscar_funcionarios_base(
                         tipo_pix=d.tipo_pix or "cpf",
                         chave_pix=pix_limpo,
                         ativo=True,
-                        data_entrada=None,
+                        data_entrada=d.data,
                         created_at=d.created_at
                     )
             elif prof_limpo and not mapa[chave].profissao:
                 mapa[chave].profissao = prof_limpo
+
+    # A primeira diária prevalece sobre qualquer data cadastrada manualmente
+    # ao sugerir o funcionário para o registro individual.
+    for chave, primeira_data in primeiras_datas_pagamento.items():
+        if chave in mapa:
+            mapa[chave].data_entrada = primeira_data
 
     # 4. Busca em funcionarios_base
     fb_list = db.query(FuncionarioBase).all()
