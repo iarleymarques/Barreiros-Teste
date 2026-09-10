@@ -1,0 +1,55 @@
+import uuid
+from datetime import datetime
+from sqlalchemy import Boolean, Column, DateTime, String, Text
+
+from app.core.database import Base
+
+
+class PessoaJuridicaCadastro(Base):
+    __tablename__ = "pessoas_juridicas_cadastros"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    protocolo = Column(String(50), unique=True, index=True, nullable=False)
+    razao_social = Column(String(255), nullable=False)
+    nome_fantasia = Column(String(255), nullable=True)
+    cnpj = Column(Text, nullable=False)
+    endereco_pj = Column(String(255), nullable=True)
+    tipo_alvara = Column(String(100), nullable=True)
+    numero_alvara = Column(String(100), nullable=True)
+    inscricao_municipal = Column(String(100), nullable=True)
+    inscricao_imobiliaria = Column(String(100), nullable=True)
+    inscricao_estadual = Column(String(100), nullable=True)
+    porte = Column(String(100), nullable=True)
+    horario_funcionamento = Column(String(100), nullable=True)
+    socio_administrador = Column(String(255), nullable=True)
+    categoria_atuacao = Column(String(255), nullable=True)
+    regime_tributacao = Column(String(100), nullable=True)
+    atividade_principal = Column(Text, nullable=True)
+    atividade_secundaria = Column(Text, nullable=True)
+    area_instalacoes = Column(String(100), nullable=True)
+    validade_alvara = Column(String(100), nullable=True)
+    data_emissao_alvara = Column(String(100), nullable=True)
+    codigo_validacao = Column(String(100), nullable=True)
+    email = Column(String(255), nullable=True)
+    telefone = Column(Text, nullable=True)
+    cep = Column(String(20), nullable=True)
+    logradouro = Column(String(255), nullable=True)
+    numero = Column(String(50), nullable=True)
+    complemento = Column(String(255), nullable=True)
+    bairro = Column(String(150), nullable=True)
+    cidade = Column(String(100), nullable=True)
+    estado = Column(String(10), nullable=True)
+    banco = Column(String(100), nullable=True)
+    outro_banco = Column(String(100), nullable=True)
+    tipo_conta = Column(String(50), nullable=True)
+    agencia = Column(Text, nullable=True)
+    conta = Column(Text, nullable=True)
+    tipo_pix = Column(String(30), nullable=True)
+    chave_pix = Column(Text, nullable=True)
+    cargo = Column(String(100), nullable=True)
+    outro_cargo = Column(String(100), nullable=True)
+    unidade = Column(String(150), nullable=True)
+    turno = Column(String(100), nullable=True)
+    sede = Column(String(255), nullable=True)
+    aceitou_termos = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

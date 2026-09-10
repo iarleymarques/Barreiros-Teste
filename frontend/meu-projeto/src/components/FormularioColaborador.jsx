@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import { toCanvas } from 'html-to-image';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { baixarDocumentoColaboradorApi, createColaboradorApi, getDocumentosColaboradorApi } from '../services/api';
+import { baixarDocumentoColaboradorApi, createColaboradorApi, createPessoaJuridicaApi, getDocumentosColaboradorApi } from '../services/api';
 import DocumentosPessoaFisica from './DocumentosPessoaFisica';
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -94,12 +94,14 @@ function isValidPhone(phone) {
 }
 
 export default function FormularioColaborador({ userEmail = '', onLogout, onBack }) {
+  const chaveRascunho = `barreiros:cadastro-colaborador:${userEmail.trim().toLowerCase() || 'visitante'}`;
   const [currentStep, setCurrentStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1);
   const [isCompleted, setIsCompleted] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [colaboradorId, setColaboradorId] = useState('');
+  const [rascunhoCarregado, setRascunhoCarregado] = useState(false);
   const pdfRef = useRef(null);
 
   // Form State com suporte a Pessoa Física e Pessoa Jurídica (Corporativo)
@@ -167,13 +169,13 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  const [protocolo] = useState(() => {
+  const [protocolo, setProtocolo] = useState(() => {
     const ano = new Date().getFullYear();
     const rand = Math.floor(100000 + Math.random() * 900000);
     return `IB-${ano}-${rand}`;
   });
 
-  const [dataEmissao] = useState(() => {
+  const [dataEmissao, setDataEmissao] = useState(() => {
     const now = new Date();
     return now.toLocaleString('pt-BR', {
       day: '2-digit',
@@ -186,6 +188,48 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
   });
 
   // Geração do PDF em formato oficial A4 com html2canvas + jsPDF
+  // Mantém o rascunho apenas nesta sessão do navegador. Assim, atualizar a
+  // página não apaga o preenchimento e dados pessoais não ficam persistidos
+  // indefinidamente no dispositivo.
+  useEffect(() => {
+    try {
+      const salvo = sessionStorage.getItem(chaveRascunho);
+      if (salvo) {
+        const rascunho = JSON.parse(salvo);
+        if (rascunho.formData && typeof rascunho.formData === 'object') {
+          setFormData((atual) => ({ ...atual, ...rascunho.formData }));
+        }
+        setCurrentStep(Number.isInteger(rascunho.currentStep) ? rascunho.currentStep : 1);
+        setMaxStepReached(Number.isInteger(rascunho.maxStepReached) ? rascunho.maxStepReached : 1);
+        setIsCompleted(Boolean(rascunho.isCompleted));
+        setColaboradorId(rascunho.colaboradorId || '');
+        if (rascunho.protocolo) setProtocolo(rascunho.protocolo);
+        if (rascunho.dataEmissao) setDataEmissao(rascunho.dataEmissao);
+      }
+    } catch (erro) {
+      console.warn('Não foi possível restaurar o rascunho do cadastro:', erro);
+    } finally {
+      setRascunhoCarregado(true);
+    }
+  }, [chaveRascunho]);
+
+  useEffect(() => {
+    if (!rascunhoCarregado) return;
+    try {
+      sessionStorage.setItem(chaveRascunho, JSON.stringify({
+        formData,
+        currentStep,
+        maxStepReached,
+        isCompleted,
+        colaboradorId,
+        protocolo,
+        dataEmissao,
+      }));
+    } catch (erro) {
+      console.warn('Não foi possível salvar o rascunho do cadastro:', erro);
+    }
+  }, [chaveRascunho, rascunhoCarregado, formData, currentStep, maxStepReached, isCompleted, colaboradorId, protocolo, dataEmissao]);
+
   function adicionarImagemComoLauda(pdf, imagem, larguraImagem, alturaImagem, formato = 'JPEG', anexo = {}) {
     const paginaAtual = anexo.paginaAtual || 1;
     const totalPaginas = anexo.totalPaginas || 1;
@@ -905,7 +949,7 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
       setMaxStepReached((prev) => Math.max(prev, nextStep));
     } else {
       try {
-        const cadastroCriado = await createColaboradorApi({
+        const dadosCadastro = {
           tipo_pessoa: formData.tipoPessoa,
           razao_social: formData.razaoSocial,
           nome_fantasia: formData.nomeFantasia,
@@ -920,6 +964,13 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           atividade_principal: formData.atividadePrincipal,
           atividade_secundaria: formData.atividadeSecundaria,
           area_instalacoes: formData.areaInstalacoes,
+          endereco_pj: formData.enderecoPJ,
+          tipo_alvara: formData.tipoAlvara,
+          numero_alvara: formData.numeroAlvara,
+          inscricao_imobiliaria: formData.inscricaoImobiliaria,
+          validade_alvara: formData.validadeAlvara,
+          data_emissao_alvara: formData.dataEmissaoAlvara,
+          codigo_validacao: formData.codigoValidacao,
           nome_completo: formData.tipoPessoa === 'juridica' ? formData.razaoSocial : formData.nome,
           cpf: formData.tipoPessoa === 'juridica' ? formData.cnpj : formData.cpf,
           rg: formData.tipoPessoa === 'juridica' ? (formData.inscricaoEstadual || 'ISENTO') : formData.rg,
@@ -946,7 +997,10 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           turno: formData.turno,
           sede: formData.sede,
           aceitou_termos: formData.aceitouTermos
-        });
+        };
+        const cadastroCriado = formData.tipoPessoa === 'juridica'
+          ? await createPessoaJuridicaApi(dadosCadastro)
+          : await createColaboradorApi(dadosCadastro);
         setColaboradorId(cadastroCriado.id);
       } catch (err) {
         console.warn("Erro ao salvar no PostgreSQL, continuando com visualização do PDF local...", err);

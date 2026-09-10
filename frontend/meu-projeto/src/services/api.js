@@ -168,6 +168,16 @@ export async function createColaboradorApi(formData) {
   return await res.json();
 }
 
+export async function createPessoaJuridicaApi(formData) {
+  const res = await fetch(`${API_BASE_URL}/pessoas-juridicas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData),
+  });
+  if (!res.ok) throw new Error('Erro ao cadastrar pessoa jurídica');
+  return await res.json();
+}
+
 export async function getDocumentosColaboradorApi(colaboradorId) {
   const res = await fetch(`${API_BASE_URL}/colaboradores/${colaboradorId}/documentos`, {
     headers: getAuthHeaders(),
