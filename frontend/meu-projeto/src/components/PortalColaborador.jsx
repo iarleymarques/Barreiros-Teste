@@ -324,20 +324,20 @@ export default function PortalColaborador({ user, onLogout }) {
                 </div>
               </div>
 
-              {/* GRID DOS 5 BOTÕES PRINCIPAIS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              {/* GRID DOS 6 BOTÕES PRINCIPAIS (6 EM LINHA NO DESKTOP) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
                 
                 {/* BOTÃO 1: RELATÓRIO COM DADOS INDIVIDUAIS */}
                 <button
                   id="btn-relatorio-individual"
                   onClick={() => setActiveModule('formulario')}
-                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-red-50 group-hover:bg-red-600 text-red-600 group-hover:text-white flex items-center justify-center transition-colors">
-                      <FileText className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-red-50 group-hover:bg-red-600 text-red-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <FileText className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-red-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
                       Relatório com dados individuais
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -345,9 +345,9 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-red-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
                     <span>Acessar formulário</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
@@ -355,13 +355,13 @@ export default function PortalColaborador({ user, onLogout }) {
                 <button
                   id="btn-relacao-diaristas"
                   onClick={() => setActiveModule('relacao')}
-                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-100 group-hover:bg-zinc-900 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
-                      <Users className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-100 group-hover:bg-zinc-900 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
+                      <Users className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-red-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
                       Relação de diaristas
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -369,9 +369,9 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-red-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
                     <span>Ver relação</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
@@ -382,13 +382,13 @@ export default function PortalColaborador({ user, onLogout }) {
                     setSelectedDiaristaForRecibo(null);
                     setActiveModule('recibo');
                   }}
-                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
                     <div className="w-12 h-12 rounded-2xl bg-zinc-100 group-hover:bg-red-600 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
                       <Receipt className="w-6 h-6" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-red-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
                       Recibos
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -396,9 +396,9 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-red-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
                     <span>Emitir recibo</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
@@ -406,13 +406,13 @@ export default function PortalColaborador({ user, onLogout }) {
                 <button
                   id="btn-solar"
                   onClick={() => setActiveModule('solar')}
-                  className="group bg-white hover:bg-amber-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-amber-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-amber-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-amber-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 group-hover:bg-amber-500 text-amber-600 group-hover:text-white flex items-center justify-center transition-colors shadow-xs">
-                      <Sun className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 group-hover:bg-amber-500 text-amber-600 group-hover:text-white flex items-center justify-center transition-colors shadow-xs">
+                      <Sun className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-amber-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-amber-600 transition-colors leading-snug">
                       Solar
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -420,9 +420,9 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-amber-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-amber-600">
                     <span>Acessar Solar</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
@@ -430,13 +430,13 @@ export default function PortalColaborador({ user, onLogout }) {
                 <button
                   id="btn-registro-funcionarios"
                   onClick={() => setActiveModule('registro_funcionarios')}
-                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-100 group-hover:bg-red-600 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
-                      <Briefcase className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-100 group-hover:bg-red-600 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
+                      <Briefcase className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-red-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
                       Registro de funcionários
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -444,23 +444,23 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-red-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
                     <span>Acessar registros</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
-                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS */}
+                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS (AO LADO DE REGISTRO DE FUNCIONÁRIOS) */}
                 <button
                   id="btn-permissao-trabalhos"
                   onClick={() => setActiveModule('pts')}
-                  className="group bg-white hover:bg-orange-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-orange-400/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                  className="group bg-white hover:bg-orange-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-orange-400/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
                 >
                   <div className="space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-orange-50 group-hover:bg-orange-500 text-orange-600 group-hover:text-white flex items-center justify-center transition-colors">
-                      <ShieldAlert className="w-6 h-6" />
+                    <div className="w-11 h-11 rounded-2xl bg-orange-50 group-hover:bg-orange-500 text-orange-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <ShieldAlert className="w-5 h-5" />
                     </div>
-                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-orange-600 transition-colors">
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-orange-600 transition-colors leading-snug">
                       PTs
                     </h2>
                     <p className="text-xs text-zinc-500 line-clamp-2">
@@ -468,9 +468,9 @@ export default function PortalColaborador({ user, onLogout }) {
                     </p>
                   </div>
 
-                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-orange-600">
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-orange-600">
                     <span>Emitir PT</span>
-                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
 
