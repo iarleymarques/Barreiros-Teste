@@ -7,6 +7,7 @@ import CadastrarDiarista from './CadastrarDiarista';
 import ReciboIndividual from './ReciboIndividual';
 import RelatorioSolar from './RelatorioSolar';
 import RegistroFuncionarios from './RegistroFuncionarios';
+import PermissaoTrabalhos from './PermissaoTrabalhos';
 import Footer from './Footer';
 import { 
   getDiaristasApi, 
@@ -24,7 +25,8 @@ import {
   ArrowRight, 
   LayoutGrid,
   Sun,
-  Briefcase
+  Briefcase,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function PortalColaborador({ user, onLogout }) {
@@ -258,7 +260,7 @@ export default function PortalColaborador({ user, onLogout }) {
                   </div>
 
                   {/* Resumo Breve das Etapas / Módulos */}
-                  <div className="pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                  <div className="pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
                     <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
                       <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-red-200" />
@@ -306,6 +308,16 @@ export default function PortalColaborador({ user, onLogout }) {
                       </span>
                       <p className="text-red-100/90 text-[11px] leading-relaxed">
                         Data de entrada, diárias realizadas e relatório com total em dinheiro ganho.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <ShieldAlert className="w-3.5 h-3.5 text-orange-300" />
+                        6. PTs
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Permissões de Trabalho: Altura, Espaço Confinado, Eletricidade, Quente e Químicos.
                       </p>
                     </div>
                   </div>
@@ -438,6 +450,30 @@ export default function PortalColaborador({ user, onLogout }) {
                   </div>
                 </button>
 
+                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS */}
+                <button
+                  id="btn-permissao-trabalhos"
+                  onClick={() => setActiveModule('pts')}
+                  className="group bg-white hover:bg-orange-50/50 rounded-3xl p-7 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-orange-400/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[220px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-50 group-hover:bg-orange-500 text-orange-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <ShieldAlert className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-lg font-black text-zinc-900 group-hover:text-orange-600 transition-colors">
+                      PTs
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Permissões de Trabalho: Altura, Espaço Confinado, Eletricidade, Trabalho a Quente e Químicos.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 flex items-center gap-2 text-xs font-bold text-orange-600">
+                    <span>Emitir PT</span>
+                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
               </div>
             </div>
           )}
@@ -510,6 +546,15 @@ export default function PortalColaborador({ user, onLogout }) {
           {/* ========================================================= */}
           {activeModule === 'registro_funcionarios' && (
             <RegistroFuncionarios
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 8. MÓDULO PTs — PERMISSÃO DE TRABALHOS                    */}
+          {/* ========================================================= */}
+          {activeModule === 'pts' && (
+            <PermissaoTrabalhos
               onBack={() => setActiveModule('hub')}
             />
           )}

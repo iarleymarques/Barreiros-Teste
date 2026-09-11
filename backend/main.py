@@ -16,7 +16,8 @@ from app.models import (
     ColaboradorCadastro,
     DocumentoColaborador,
     PessoaJuridicaCadastro,
-    DocumentoPessoaJuridica
+    DocumentoPessoaJuridica,
+    PermissaoTrabalho
 )
 
 # Inicializa as tabelas no banco de dados PostgreSQL (Barreiro) automaticamente na inicialização
@@ -68,6 +69,20 @@ def init_db():
                     funcao VARCHAR(100),
                     data_entrada VARCHAR(20),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                """,
+                """
+                CREATE TABLE IF NOT EXISTS permissoes_trabalho (
+                    id VARCHAR PRIMARY KEY,
+                    tipo VARCHAR(50) NOT NULL,
+                    numero_pt VARCHAR(30),
+                    dados JSON NOT NULL DEFAULT '{}',
+                    responsavel VARCHAR(150),
+                    local_trabalho VARCHAR(200),
+                    data_inicio VARCHAR(30),
+                    status VARCHAR(30) DEFAULT 'EMITIDA' NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
                 """,
                 """

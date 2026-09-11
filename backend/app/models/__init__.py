@@ -7,5 +7,6 @@ from app.models.recibo import Recibo
 from app.models.documento_colaborador import DocumentoColaborador
 from app.models.pessoa_juridica import PessoaJuridicaCadastro
 from app.models.documento_pessoa_juridica import DocumentoPessoaJuridica
+from app.models.permissao_trabalho import PermissaoTrabalho
 
-__all__ = ["Usuario", "ColaboradorCadastro", "PessoaJuridicaCadastro", "DocumentoPessoaJuridica", "FuncionarioBase", "RegistroFuncionario", "DiaristaLancamento", "Recibo", "DocumentoColaborador"]
+__all__ = ["Usuario", "ColaboradorCadastro", "PessoaJuridicaCadastro", "DocumentoPessoaJuridica", "FuncionarioBase", "RegistroFuncionario", "DiaristaLancamento", "Recibo", "DocumentoColaborador", "PermissaoTrabalho"]

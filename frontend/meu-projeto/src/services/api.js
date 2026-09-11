@@ -330,3 +330,70 @@ export async function getRelatorioFuncionarioApi(id) {
   if (!res.ok) throw new Error('Erro ao buscar relatório do funcionário');
   return await res.json();
 }
+
+// ============================================================
+// Módulo 6: Permissões de Trabalho (PTs)
+// ============================================================
+
+export async function getPTsApi(tipo, status) {
+  let url = `${API_BASE_URL}/permissoes-trabalho`;
+  const params = [];
+  if (tipo) params.push(`tipo=${encodeURIComponent(tipo)}`);
+  if (status) params.push(`status=${encodeURIComponent(status)}`);
+  if (params.length) url += `?${params.join('&')}`;
+  const res = await fetch(url, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Erro ao buscar Permissões de Trabalho');
+  return await res.json();
+}
+
+export async function getPTByIdApi(id) {
+  const res = await fetch(`${API_BASE_URL}/permissoes-trabalho/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('PT não encontrada');
+  return await res.json();
+}
+
+export async function createPTApi(dados) {
+  const res = await fetch(`${API_BASE_URL}/permissoes-trabalho`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(dados),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao criar Permissão de Trabalho');
+  }
+  return await res.json();
+}
+
+export async function updatePTApi(id, dados) {
+  const res = await fetch(`${API_BASE_URL}/permissoes-trabalho/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(dados),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao atualizar PT');
+  }
+  return await res.json();
+}
+
+export async function updateStatusPTApi(id, novoStatus) {
+  const res = await fetch(
+    `${API_BASE_URL}/permissoes-trabalho/${id}/status?novo_status=${encodeURIComponent(novoStatus)}`,
+    { method: 'PATCH', headers: getAuthHeaders() }
+  );
+  if (!res.ok) throw new Error('Erro ao atualizar status da PT');
+  return await res.json();
+}
+
+export async function deletePTApi(id) {
+  const res = await fetch(`${API_BASE_URL}/permissoes-trabalho/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao remover PT');
+  return await res.json();
+}
