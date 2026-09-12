@@ -5,7 +5,7 @@ O **Portal de Cadastro Solar Coca-Cola** é uma aplicação web corporativa dest
 
 O sistema substitui formulários manuais por um fluxo digital seguro, intuitivo e moderno, que ao final do processo gera automaticamente um **Recibo / Comprovante Oficial de Cadastro em PDF** padronizado com a identidade visual da Solar.
 
----
+----
 
 ## 2. Perfis de Usuário (Controle de Acesso)
 1. **Colaborador / Novo Colaborador**:
