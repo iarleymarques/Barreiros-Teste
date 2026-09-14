@@ -11,8 +11,8 @@ import { getAuthToken, getCurrentUserApi, removeAuthToken } from './services/api
 
 function Home({ isLoggedIn, user, onLogin, onLogout }) {
   return (
-    <div className="min-h-screen text-zinc-800 flex flex-col antialiased selection:bg-red-600 selection:text-white bg-zinc-900">
-      {/* Navbar com fundo limpo no topo */}
+    <div className="min-h-screen text-slate-800 flex flex-col antialiased selection:bg-red-600 selection:text-white bg-[#F8FAFC]">
+      {/* Navbar institucional com fundo limpo */}
       <Navbar
         isLoggedIn={isLoggedIn}
         user={user}
@@ -20,31 +20,11 @@ function Home({ isLoggedIn, user, onLogin, onLogout }) {
         onLogout={onLogout}
       />
 
-      {/* Área principal com imagem da Distribuidora Irmãos Barreiro */}
-      <main className="flex-grow relative overflow-hidden">
-        {/* IMAGEM DE FUNDO GLOBAL (Distribuidora Irmãos Barreiro) */}
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 pointer-events-none z-0"
-          style={{
-            backgroundImage: 'url(/images/fundo_distribuidora_barreiro.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center 40%',
-            filter: 'brightness(0.75) contrast(1.12) saturate(1.05)',
-          }}
-        />
-
-        {/* Overlay translúcido fixo para estabilidade e nitidez */}
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 bg-gradient-to-b from-zinc-950/30 via-zinc-900/15 to-zinc-950/40 pointer-events-none z-0"
-        />
-
+      {/* Área principal corporativa */}
+      <main className="flex-grow relative">
         {/* Seções da Landing Page Pública */}
-        <div className="relative z-10">
-          <Historia />
-          <FuncionamentoSite />
-        </div>
+        <Historia />
+        <FuncionamentoSite />
       </main>
 
       {/* Rodapé */}

@@ -2,225 +2,183 @@ import React from 'react';
 import {
   Building2,
   MapPin,
-  Award,
-  ShieldCheck,
-  Users,
-  Store,
-  Truck,
-  Clock,
   Calendar,
+  Clock,
   Beer,
-  Package
+  Truck,
+  ShieldCheck,
+  Store
 } from 'lucide-react';
 
 export default function Historia() {
+  const kpis = [
+    {
+      icon: Calendar,
+      label: 'Ano de Fundação',
+      value: '1997',
+      description: 'Fundada em 6 de março em Cascavel/CE'
+    },
+    {
+      icon: Clock,
+      label: 'Tradição no Mercado',
+      value: 'Quase 30 anos',
+      description: 'Solidez contínua no setor de bebidas'
+    },
+    {
+      icon: Beer,
+      label: 'Segmento de Atuação',
+      value: 'Atacado de Bebidas',
+      description: 'Cerveja, chope, refrigerantes e linhas líderes'
+    },
+    {
+      icon: MapPin,
+      label: 'Sede Operacional',
+      value: 'Cascavel - CE',
+      description: 'Distrito Industrial • Atendimento regional'
+    }
+  ];
+
   return (
-    <section id="historia" className="py-16 sm:py-24 relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+    <section id="historia" className="py-12 sm:py-16 lg:py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-14">
 
         {/* -------------------------------------------------------------- */}
-        {/* BLOCO 1: DISTRIBUIDORA IRMÃOS BARREIRO EM CASCAVEL, CEARÁ      */}
+        {/* HERO / CABEÇALHO PRINCIPAL EXECUTIVO                            */}
         {/* -------------------------------------------------------------- */}
-        <div>
-          {/* Cabeçalho com contraste perfeito para o fundo intermediário */}
-          <div className="mb-10 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 text-red-700 border border-white/30 text-xs font-bold uppercase tracking-wider mb-3 shadow-md backdrop-blur-md">
-              <Building2 className="w-3.5 h-3.5 text-red-600" />
-              <span>Nossa História & Presença Corporativa</span>
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight drop-shadow-md">
-              Distribuidora Irmãos Barreiro em Cascavel CE
-            </h2>
-
-            <div className="flex items-center gap-1.5 mt-3 sm:justify-start justify-center">
-              <div className="w-16 h-1.5 bg-red-600 rounded-full"></div>
-              <div className="w-3 h-1.5 bg-red-400 rounded-full"></div>
-              <div className="w-1.5 h-1.5 bg-amber-400 rounded-full"></div>
-            </div>
+        <div className="text-center sm:text-left max-w-4xl">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700 mb-4 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-red-600"></span>
+            <span>Perfil Corporativo • Distribuidora Irmãos Barreiro</span>
           </div>
 
-          {/* Card Principal — Distribuidora Irmãos Barreiro */}
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-10 lg:p-12 border border-white/80 shadow-2xl space-y-8 relative overflow-hidden">
-            {/* Brilho decorativo sutil */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-red-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#0F172A] tracking-tight leading-tight">
+            Distribuidora Irmãos Barreiro em Cascavel CE
+          </h1>
 
-            {/* Parágrafo de abertura */}
-            <div className="relative z-10">
-              <p className="text-zinc-800 text-base sm:text-lg lg:text-xl leading-relaxed">
-                A <strong className="font-bold text-zinc-950">Distribuidora Irmãos Barreiro de Bebidas</strong> é uma empresa cearense fundada em <strong className="font-semibold text-zinc-950">6 de março de 1997</strong>, com sede na <strong className="font-semibold text-zinc-950">Rua João Damasceno Fontenele, nº 5003</strong>, no <strong className="font-semibold text-zinc-950">Distrito Industrial de Cascavel, Ceará</strong>. Ao longo de mais de <strong className="font-bold text-red-600">quase 30 anos de atuação</strong>, a empresa se consolidou no comércio atacadista de cerveja, chope e refrigerante, atendendo comerciantes e consumidores em Cascavel e região.
-              </p>
-            </div>
+          <p className="mt-3 text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+            Referência regional em abastecimento e comércio atacadista de bebidas, conectando as principais marcas aos comerciantes e varejistas com pontualidade, tradição e confiabilidade.
+          </p>
 
-            {/* Caixa interna com números de destaque */}
-            <div className="relative z-10 bg-zinc-50/90 rounded-2xl p-6 sm:p-8 border-l-4 border-l-red-600 border border-zinc-200/90 shadow-sm space-y-6">
-              <p className="text-zinc-700 text-base sm:text-lg leading-relaxed">
-                Com mais de duas décadas e meia de história, tradição e forte compromisso com o desenvolvimento regional, a Distribuidora Irmãos Barreiro atua com excelência no fornecimento e abastecimento contínuo de bebidas, fortalecendo parcerias comerciais e impulsionando a economia local.
-              </p>
-
-              {/* Grid de métricas */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-zinc-200">
-                {/* 1. FUNDAÇÃO */}
-                <div className="bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs hover:border-red-300 transition-colors">
-                  <div className="flex items-center gap-1.5 text-red-600 text-xs font-bold uppercase tracking-wider mb-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Fundação</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-zinc-900">1997</div>
-                  <span className="text-xs text-zinc-500 font-medium">Início das atividades em Cascavel/CE</span>
-                </div>
-
-                {/* 2. TRAJETÓRIA */}
-                <div className="bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs hover:border-red-300 transition-colors">
-                  <div className="flex items-center gap-1.5 text-red-600 text-xs font-bold uppercase tracking-wider mb-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Trajetória</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-zinc-900">Quase 30 anos</div>
-                  <span className="text-xs text-zinc-500 font-medium">De atuação no mercado cearense</span>
-                </div>
-
-                {/* 3. SEGMENTO */}
-                <div className="bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs hover:border-amber-300 transition-colors">
-                  <div className="flex items-center gap-1.5 text-amber-600 text-xs font-bold uppercase tracking-wider mb-1">
-                    <Beer className="w-3.5 h-3.5" />
-                    <span>Segmento</span>
-                  </div>
-                  <div className="text-lg sm:text-xl font-black text-zinc-900">Atacado de Bebidas</div>
-                  <span className="text-xs text-zinc-500 font-medium">Cerveja, chope e refrigerante</span>
-                </div>
-
-                {/* 4. SEDE */}
-                <div className="bg-white p-4 rounded-xl border border-zinc-200/90 shadow-xs hover:border-emerald-300 transition-colors">
-                  <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold uppercase tracking-wider mb-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>Sede</span>
-                  </div>
-                  <div className="text-xl sm:text-2xl font-black text-zinc-900">Cascavel - CE</div>
-                  <span className="text-xs text-zinc-500 font-medium">Distrito Industrial</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Parágrafo de fechamento */}
-            <div className="relative z-10">
-              <p className="text-zinc-600 text-base sm:text-lg leading-relaxed">
-                Presente no dia a dia dos cascavelenses e comércios da região, a Distribuidora une tradição, agilidade e confiança, contribuindo ativamente para o abastecimento e fortalecimento do comércio local.
-              </p>
-            </div>
+          <div className="flex items-center gap-1.5 mt-5 sm:justify-start justify-center">
+            <div className="w-14 h-1 bg-red-600 rounded-full"></div>
+            <div className="w-3 h-1 bg-slate-300 rounded-full"></div>
+            <div className="w-1.5 h-1 bg-slate-200 rounded-full"></div>
           </div>
         </div>
 
         {/* -------------------------------------------------------------- */}
-        {/* BLOCO 2: DISTRIBUIDORA IRMÃOS BARREIRO                         */}
+        {/* GRID DE KPIs / CARDS DE MÉTRICAS (4 COLUNAS NO TOPO)           */}
         {/* -------------------------------------------------------------- */}
-        <div className="space-y-6">
-          {/* Cabeçalho Distribuidora */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/20 pb-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 text-red-700 text-xs font-bold uppercase tracking-wider mb-2 border border-white/30 shadow-md backdrop-blur-md">
-                <Store className="w-3.5 h-3.5 text-red-600" />
-                <span>Elo Regional de Distribuição</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {kpis.map((kpi, idx) => {
+            const IconComponent = kpi.icon;
+            return (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-6 border border-slate-200 border-t-4 border-t-red-600 shadow-xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      {kpi.label}
+                    </span>
+                    <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
+                      <IconComponent className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight mb-2">
+                    {kpi.value}
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed border-t border-slate-100 pt-3 mt-2">
+                  {kpi.description}
+                </p>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-md">
-                Distribuidora Irmãos Barreiro de Bebidas
-              </h3>
-              <p className="text-sm text-zinc-200 mt-1 drop-shadow-xs">
-                Presença e abastecimento contínuo no comércio e varejo de Cascavel e região.
+            );
+          })}
+        </div>
+
+        {/* -------------------------------------------------------------- */}
+        {/* RESUMO EXECUTIVO FUNCIONAL & OPERAÇÃO REGIONAL                 */}
+        {/* -------------------------------------------------------------- */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 sm:p-10 lg:p-12 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+
+            {/* Coluna de Síntese Institucional */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200">
+                <Building2 className="w-3.5 h-3.5 text-red-600" />
+                <span>Atuação Institucional & Logística</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight leading-snug">
+                Solidez operacional e compromisso com o desenvolvimento regional
+              </h2>
+
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+                Com sede estratégica no <strong className="text-slate-900 font-semibold">Distrito Industrial de Cascavel, Ceará</strong>, a <strong className="text-slate-900 font-semibold">Distribuidora Irmãos Barreiro</strong> atua há quase três décadas como elo essencial na cadeia de suprimentos de bebidas, abastecendo bares, restaurantes, mercadinhos e comércios locais com agilidade e constância.
               </p>
-            </div>
-          </div>
 
-          {/* Card da Distribuidora */}
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl overflow-hidden border border-white/80 shadow-2xl grid grid-cols-1 lg:grid-cols-12">
-
-            {/* Foto */}
-            <div className="lg:col-span-5 relative min-h-[320px] overflow-hidden bg-zinc-900">
-              <img
-                src="/images/copo_refrigerante.jpg"
-                alt="Distribuição de Bebidas - Distribuidora Irmãos Barreiro"
-                className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
-                style={{ minHeight: '320px' }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-transparent"></div>
-
-              <div className="absolute top-4 left-4">
-                <span className="bg-red-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
-                  Cascavel - CE
-                </span>
-              </div>
-
-              <div className="absolute bottom-4 left-4 right-4">
-                <span className="text-white text-xs font-semibold bg-zinc-950/80 px-3 py-1.5 rounded-xl border border-white/20 inline-flex items-center gap-1.5 backdrop-blur-sm">
-                  <MapPin className="w-3.5 h-3.5 text-red-400" />
-                  Operação & Atendimento Regional
-                </span>
-              </div>
-            </div>
-
-            {/* Conteúdo */}
-            <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-between space-y-6 bg-gradient-to-br from-white via-zinc-50/90 to-red-50/30">
-
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold uppercase tracking-wider border border-red-200/60">
-                  <Store className="w-3.5 h-3.5 text-red-600" />
-                  <span>Elo Regional em Cascavel - CE</span>
-                </div>
-
-                <h4 className="text-2xl sm:text-3xl font-black text-zinc-900 tracking-tight">
-                  Distribuidora Irmãos Barreiro
-                </h4>
-
-                <p className="text-zinc-700 text-base sm:text-lg leading-relaxed">
-                  Com quase <strong>30 anos de atuação e tradição familiar em Cascavel</strong>, a empresa é um dos elos regionais essenciais da grande cadeia de distribuição de Bebidas <strong className="text-zinc-950 font-bold"></strong> no interior do Ceará.
-                </p>
-              </div>
-
-              {/* Destaque operacional */}
-              <div className="bg-white/90 rounded-2xl p-5 border-l-4 border-l-red-600 border border-zinc-200/80 shadow-xs space-y-2">
-                <div className="flex items-center gap-2 text-red-600 text-xs font-bold uppercase tracking-wider">
-                  <Truck className="w-4 h-4" />
-                  <span>Atuação no Atacado Regional</span>
-                </div>
-                <p className="text-zinc-600 text-sm leading-relaxed">
-                  Recebe as bebidas fabricadas pela Solar e abastece no atacado bares, mercadinhos, restaurantes e pontos de venda de Cascavel e cidades vizinhas, garantindo capilaridade, frescor e agilidade logística ao comércio local.
-                </p>
-              </div>
-
-              {/* Pilares */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-white p-4 rounded-2xl border border-zinc-200/90 shadow-xs flex items-start gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-50 text-red-600 shrink-0 border border-red-100">
-                    <Clock className="w-4 h-4" />
+              {/* Destaques operacionais em 2 pilares sintéticos */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-1">
+                    <Truck className="w-4 h-4 text-red-600" />
+                    <span>Capilaridade no Atacado</span>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block">
-                      Tradição Regional
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Logística estruturada para atendimento ágil e contínuo aos pontos de venda de toda a região.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-sm mb-1">
+                    <ShieldCheck className="w-4 h-4 text-red-600" />
+                    <span>Tradição & Confiança</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Parcerias comerciais consolidadas, integridade de produtos e atendimento personalizado ao comércio.
+                  </p>
+                </div>
+              </div>
+
+              {/* Endereço Institucional */}
+              <div className="flex items-center gap-2 text-xs text-slate-500 pt-3 border-t border-slate-100">
+                <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                <span>Rua João Damasceno Fontenele, nº 5003 • Distrito Industrial, Cascavel - CE</span>
+              </div>
+            </div>
+
+            {/* Coluna da Foto Operacional Integrada */}
+            <div className="lg:col-span-5">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs group">
+                <img
+                  src="/images/copo_refrigerante.jpg"
+                  alt="Distribuição de Bebidas - Distribuidora Irmãos Barreiro"
+                  className="w-full h-72 sm:h-80 lg:h-96 object-cover object-center group-hover:scale-102 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
+
+                <div className="absolute top-3 left-3">
+                  <span className="bg-red-600 text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xs">
+                    Cascavel - CE
+                  </span>
+                </div>
+
+                <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md rounded-xl p-3 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                      Operação & Atendimento
                     </span>
-                    <div className="text-base font-black text-zinc-900 mt-0.5">Quase 30 Anos</div>
-                    <p className="text-xs text-zinc-500 mt-0.5 leading-snug">
-                      Solidez e atuação contínua no atacado de bebidas.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-2xl border border-zinc-200/90 shadow-xs flex items-start gap-3.5">
-                  <div className="p-2.5 rounded-xl bg-red-50 text-red-600 shrink-0 border border-red-100">
-                    <Store className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold text-red-600 uppercase tracking-wider block">
-                      Varejo & PDVs
+                    <span className="text-xs font-bold text-slate-900">
+                      Abastecimento Comercial Regional
                     </span>
-                    <div className="text-base font-black text-zinc-900 mt-0.5">Atendimento Direto</div>
-                    <p className="text-xs text-zinc-500 mt-0.5 leading-snug">
-                      Abastecimento de bares, restaurantes e comércios.
-                    </p>
                   </div>
+                  <Store className="w-4 h-4 text-red-600 shrink-0" />
                 </div>
               </div>
-
             </div>
+
           </div>
         </div>
 
