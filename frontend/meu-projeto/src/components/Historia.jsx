@@ -12,8 +12,7 @@ import {
   ArrowRight,
   ArrowDown,
   ExternalLink,
-  Lock,
-  ChevronRight
+  Lock
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -117,38 +116,38 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
           backgroundAttachment: 'fixed',
         }}
       >
-        {/* Overlay escuro unificado para contraste e legibilidade corporativa */}
-        <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[1px]"></div>
+        {/* Overlay escuro balanceado com gradiente radial sutil para máxima legibilidade */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/80 to-slate-950/95 backdrop-blur-[1px]"></div>
 
         {/* ================================================================= */}
-        {/* HERO PRINCIPAL REORGANIZADO — Limpo, Monumental e Executivo       */}
+        {/* HERO PRINCIPAL — Proporções Áureas, Equilibrado e Elegante        */}
         {/* ================================================================= */}
         <div className="relative z-10 border-b border-white/10">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center flex flex-col items-center">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-12 sm:pb-14 text-center flex flex-col items-center">
 
-            {/* Badge Institucional */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/70 border border-red-700/60 text-red-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            {/* Badge Institucional Discreta */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/70 border border-red-700/60 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-4 backdrop-blur-sm shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
               <span>Distribuidora Irmãos Barreiro · Sistema Corporativo</span>
             </div>
 
-            {/* Título Principal de Alto Impacto */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12] mb-6 max-w-4xl">
-              Gestão Integrada de Pessoal, Diárias & Segurança Operacional
+            {/* Título Principal de Alto Impacto (em 2 linhas perfeitamente balanceadas) */}
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15] mb-4 max-w-3xl mx-auto">
+              Gestão de Diaristas, Recibos &amp; <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-400">Segurança Operacional</span>
             </h1>
 
-            {/* Texto Descritivo Executivo */}
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto mb-10 font-normal">
-              Central corporativa para administração de colaboradores temporários, processamento de diárias via PIX, 
-              emissão de recibos com quitação jurídica, relatórios analíticos Solar e Permissões de Trabalho (PTs).
+            {/* Texto Descritivo Direto e Escaneável */}
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl mx-auto mb-6 font-normal">
+              Controle de diárias e transferências PIX, emissão de recibos com quitação jurídica, 
+              relatórios consolidados Solar e Permissões de Trabalho (PTs).
             </p>
 
-            {/* Ações / CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 w-full sm:w-auto">
+            {/* Ações / CTAs com Estilo Corporativo Harmonioso */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-5 w-full sm:w-auto">
               {isLoggedIn ? (
                 <button
                   onClick={() => navigate('/portal')}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0D0D0D] text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-xl shadow-black/30"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-lg shadow-red-950/50 hover:shadow-red-800/80"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Acessar o Portal do Colaborador</span>
@@ -156,7 +155,7 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
               ) : (
                 <button
                   onClick={onOpenLogin}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-xl shadow-red-950/60 hover:shadow-red-900/80"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-lg bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-lg shadow-red-950/50 hover:shadow-red-800/80"
                 >
                   <LogIn className="w-4 h-4" />
                   <span>Entrar no Sistema</span>
@@ -165,34 +164,34 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
 
               <a
                 href="#modulos"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/20 transition-all duration-150 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/20 backdrop-blur-sm transition-all duration-150 cursor-pointer"
               >
                 <span>Conhecer Módulos</span>
-                <ArrowDown className="w-4 h-4 text-red-400" />
+                <ArrowDown className="w-3.5 h-3.5 text-red-400" />
               </a>
             </div>
 
             {/* Aviso de Acesso Seguro */}
-            <div className="flex items-center gap-2 text-xs text-slate-400 mb-12">
+            <div className="inline-flex items-center gap-2 text-xs text-slate-400 mb-8">
               <Lock className="w-3.5 h-3.5 text-red-400 shrink-0" />
               <span>Ambiente restrito e autenticado para a equipe de RH, administração e operações.</span>
             </div>
 
-            {/* Barra dos 4 Pilares Operacionais */}
-            <div className="w-full border border-white/10 bg-slate-950/60 backdrop-blur-sm rounded-sm overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 text-left">
+            {/* Barra dos 4 Pilares Operacionais com Design Premium Glassmorphism */}
+            <div className="w-full border border-white/15 bg-slate-950/70 backdrop-blur-md rounded-xl overflow-hidden shadow-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 text-left">
               {pillars.map((p, i) => {
                 const PillarIcon = p.icon;
                 return (
-                  <div key={i} className="p-5 hover:bg-white/5 transition-colors">
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="w-7 h-7 rounded bg-red-950/70 border border-red-700/50 flex items-center justify-center text-red-400 shrink-0">
+                  <div key={i} className="p-4 sm:p-5 hover:bg-white/5 transition-colors group">
+                    <div className="flex items-center gap-2.5 mb-1.5">
+                      <div className="w-7 h-7 rounded-lg bg-red-950/80 border border-red-700/60 flex items-center justify-center text-red-400 shrink-0 group-hover:bg-red-700 group-hover:text-white transition-colors">
                         <PillarIcon className="w-3.5 h-3.5" />
                       </div>
-                      <span className="font-bold text-white text-xs">
+                      <span className="font-bold text-white text-xs sm:text-sm group-hover:text-red-300 transition-colors">
                         {p.title}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-[11px] text-slate-300 leading-relaxed pl-9.5">
                       {p.desc}
                     </p>
                   </div>
@@ -204,17 +203,17 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
         </div>
 
         {/* ================================================================= */}
-        {/* O QUE VOCÊ PODE FAZER AQUI — 6 MÓDULOS REAIS DO SISTEMA           */}
+        {/* O QUE VOCÊ PODE FAZER AQUI? — 6 MÓDULOS REAIS DO SISTEMA          */}
         {/* ================================================================= */}
-        <div id="modulos" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 scroll-mt-6">
+        <div id="modulos" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-18 scroll-mt-6">
 
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">
                 Recursos do Sistema
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                O que você pode fazer aqui
+                O QUE VOCÊ PODE FAZER AQUI?
               </h2>
               <div className="w-10 h-0.5 bg-red-600 mt-2"></div>
             </div>
