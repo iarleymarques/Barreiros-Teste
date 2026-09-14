@@ -4,8 +4,7 @@ import Logo from './Logo';
 import { loginApi } from '../services/api';
 import { LogIn, LogOut, X, Lock, Mail, AlertCircle, Loader2, LayoutDashboard } from 'lucide-react';
 
-export default function Navbar({ isLoggedIn, user, onLogin, onLogout }) {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
+export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpen = false, setIsLoginOpen = () => {} }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

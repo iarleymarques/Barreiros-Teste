@@ -3,28 +3,34 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import PortalColaborador from './components/PortalColaborador';
 import Historia from './components/Historia';
-import FuncionamentoSite from './components/FuncionamentoSite';
 import Footer from './components/Footer';
 import PoliticaPrivacidade from './components/PoliticaPrivacidade';
 
 import { getAuthToken, getCurrentUserApi, removeAuthToken } from './services/api';
 
 function Home({ isLoggedIn, user, onLogin, onLogout }) {
+  // Estado do modal de login elevado para cá, para que o Hero da home
+  // também possa acionar o modal com o mesmo CTA "Entrar".
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
   return (
-    <div className="min-h-screen text-slate-800 flex flex-col antialiased selection:bg-red-600 selection:text-white bg-[#F8FAFC]">
-      {/* Navbar institucional com fundo limpo */}
+    <div className="min-h-screen text-slate-900 flex flex-col antialiased selection:bg-red-700 selection:text-white bg-white">
+      {/* Navbar institucional */}
       <Navbar
         isLoggedIn={isLoggedIn}
         user={user}
         onLogin={onLogin}
         onLogout={onLogout}
+        isLoginOpen={isLoginOpen}
+        setIsLoginOpen={setIsLoginOpen}
       />
 
       {/* Área principal corporativa */}
-      <main className="flex-grow relative">
-        {/* Seções da Landing Page Pública */}
-        <Historia />
-        <FuncionamentoSite />
+      <main className="flex-grow">
+        <Historia
+          isLoggedIn={isLoggedIn}
+          onOpenLogin={() => setIsLoginOpen(true)}
+        />
       </main>
 
       {/* Rodapé */}
@@ -83,7 +89,7 @@ function App() {
     try {
       sessionStorage.removeItem('user_barreiro');
     } catch (err) {
-      console.warn('Erro ao limpar dados de sessão:', err);
+      console.warn('Erro ao limpar dados de sessão:', err);;
     }
   }
 
@@ -124,4 +130,3 @@ function App() {
 }
 
 export default App;
-
