@@ -34,21 +34,30 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
       {/* ================================================================= */}
       {/* HERO — Split layout: texto esquerdo, mock de documento direito     */}
       {/* ================================================================= */}
-      <div className="border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div
+        className="border-b border-slate-800 relative"
+        style={{
+          backgroundImage: 'url(/images/fundo_distribuidora_barreiro.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 40%',
+        }}
+      >
+        {/* Overlay escuro para garantir legibilidade */}
+        <div className="absolute inset-0 bg-slate-950/75"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[540px] items-stretch">
 
             {/* Coluna esquerda: conteúdo */}
             <div className="flex flex-col justify-center py-16 sm:py-20 lg:pr-16">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+              <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-5">
                 Sistema Interno · Área de RH
               </span>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#0D0D0D] tracking-tight leading-[1.1] mb-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.1] mb-4">
                 Cadastro e gestão<br className="hidden sm:block" /> de diaristas
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-500 leading-relaxed max-w-md mb-8">
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-md mb-8">
                 Preenchimento guiado por etapas, registro de dados bancários e chave PIX,
                 aceite LGPD e emissão automática de comprovante em PDF.
               </p>
@@ -73,7 +82,7 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
                     <LogIn className="w-4 h-4" />
                     Entrar no Sistema
                   </button>
-                  <p className="mt-3 text-xs text-slate-400">
+                  <p className="mt-3 text-xs text-slate-400/80">
                     Acesso restrito à equipe de RH autorizada.
                   </p>
                 </div>
@@ -81,7 +90,7 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
             </div>
 
             {/* Coluna direita: mock de formulário/documento */}
-            <div className="hidden lg:flex items-center justify-center bg-slate-50 border-l border-slate-200 py-16 px-12">
+            <div className="hidden lg:flex items-center justify-center border-l border-white/10 py-16 px-12">
               {/* Documento estilizado — ilustração tipográfica, sem imagens externas */}
               <div className="w-full max-w-sm bg-white border border-slate-200 shadow-sm">
 
