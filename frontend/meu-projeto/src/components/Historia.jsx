@@ -10,9 +10,10 @@ import {
   ShieldAlert, 
   ShieldCheck, 
   ArrowRight,
+  ArrowDown,
   ExternalLink,
-  CheckCircle2,
-  FileCheck
+  Lock,
+  ChevronRight
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -67,6 +68,29 @@ const modules = [
   },
 ];
 
+const pillars = [
+  {
+    icon: Users,
+    title: 'Diaristas & PIX',
+    desc: 'Cadastro guiado e controle diário de pagamentos.',
+  },
+  {
+    icon: Receipt,
+    title: 'Recibos com Quitação',
+    desc: 'Comprovação formal com plena validade jurídica.',
+  },
+  {
+    icon: Sun,
+    title: 'Operação Solar',
+    desc: 'Fechamento diário e mensal de diárias em PDF.',
+  },
+  {
+    icon: ShieldAlert,
+    title: 'Segurança & PTs',
+    desc: 'Permissões para Altura, Elétrica e Espaço Confinado.',
+  },
+];
+
 export default function Historia({ isLoggedIn, onOpenLogin }) {
   const navigate = useNavigate();
 
@@ -96,192 +120,95 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
         {/* Overlay escuro unificado para contraste e legibilidade corporativa */}
         <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[1px]"></div>
 
-        {/* HERO PRINCIPAL */}
+        {/* ================================================================= */}
+        {/* HERO PRINCIPAL REORGANIZADO — Limpo, Monumental e Executivo       */}
+        {/* ================================================================= */}
         <div className="relative z-10 border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[560px] items-center py-12 lg:py-16 gap-8 lg:gap-12">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 text-center flex flex-col items-center">
 
-              {/* Coluna esquerda: conteúdo institucional baseado no que o site dispõe */}
-              <div className="lg:col-span-7 flex flex-col justify-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/60 border border-red-700/50 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-4 w-fit">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                  <span>Portal Operacional & RH · Distribuidora Irmãos Barreiro</span>
-                </div>
+            {/* Badge Institucional */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-950/70 border border-red-700/60 text-red-300 text-xs font-bold uppercase tracking-wider mb-6 backdrop-blur-sm shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              <span>Distribuidora Irmãos Barreiro · Sistema Corporativo</span>
+            </div>
 
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.12] mb-4">
-                  Gestão de Diaristas, Recibos & Segurança Operacional
-                </h1>
+            {/* Título Principal de Alto Impacto */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.12] mb-6 max-w-4xl">
+              Gestão Integrada de Pessoal, Diárias & Segurança Operacional
+            </h1>
 
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl mb-6">
-                  Sistema corporativo integrado para cadastro de colaboradores, controle diário de pagamentos via PIX, 
-                  emissão de recibos com quitação jurídica, relatórios analíticos Solar e Permissões de Trabalho (PTs).
-                </p>
+            {/* Texto Descritivo Executivo */}
+            <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-2xl mx-auto mb-10 font-normal">
+              Central corporativa para administração de colaboradores temporários, processamento de diárias via PIX, 
+              emissão de recibos com quitação jurídica, relatórios analíticos Solar e Permissões de Trabalho (PTs).
+            </p>
 
-                {/* Micro-pills com os recursos reais disponíveis no sistema */}
-                <div className="flex flex-wrap gap-2 mb-8">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-white text-xs font-medium border border-white/10">
-                    <FileText className="w-3.5 h-3.5 text-red-400" /> Ficha Cadastral em PDF
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-white text-xs font-medium border border-white/10">
-                    <Users className="w-3.5 h-3.5 text-red-400" /> Controle de Diárias & PIX
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-white text-xs font-medium border border-white/10">
-                    <Receipt className="w-3.5 h-3.5 text-red-400" /> Recibos com Quitação
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-white text-xs font-medium border border-white/10">
-                    <Sun className="w-3.5 h-3.5 text-amber-400" /> Relatórios Solar
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 text-white text-xs font-medium border border-white/10">
-                    <ShieldAlert className="w-3.5 h-3.5 text-orange-400" /> Permissões de Trabalho (PTs)
-                  </span>
-                </div>
+            {/* Ações / CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14 w-full sm:w-auto">
+              {isLoggedIn ? (
+                <button
+                  onClick={() => navigate('/portal')}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0D0D0D] text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-xl shadow-black/30"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Acessar o Portal do Colaborador</span>
+                </button>
+              ) : (
+                <button
+                  onClick={onOpenLogin}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-all duration-150 cursor-pointer shadow-xl shadow-red-950/60 hover:shadow-red-900/80"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Entrar no Sistema</span>
+                </button>
+              )}
 
-                {/* CTA principal */}
-                {isLoggedIn ? (
-                  <div>
-                    <button
-                      onClick={() => navigate('/portal')}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-100 text-[#0D0D0D] text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer shadow-lg shadow-black/20"
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Acessar o Portal do Colaborador
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <button
-                      onClick={onOpenLogin}
-                      className="inline-flex items-center gap-2.5 px-6 py-3 bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer shadow-xl shadow-red-950/50"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      Entrar no Sistema
-                    </button>
-                    <p className="mt-3 text-xs text-slate-400">
-                      Acesso restrito à equipe autorizada de RH, administração e operações.
-                    </p>
-                  </div>
-                )}
-              </div>
+              <a
+                href="#modulos"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/15 text-white text-sm font-semibold border border-white/20 transition-all duration-150 cursor-pointer"
+              >
+                <span>Conhecer Módulos</span>
+                <ArrowDown className="w-4 h-4 text-red-400" />
+              </a>
+            </div>
 
-              {/* Coluna direita: DOCUMENTO REALISTA (Ficha / Comprovante Oficial) */}
-              <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
-                <div className="w-full max-w-sm bg-white border border-slate-200 shadow-2xl rounded-lg overflow-hidden text-slate-800">
+            {/* Aviso de Acesso Seguro */}
+            <div className="flex items-center gap-2 text-xs text-slate-400 mb-12">
+              <Lock className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span>Ambiente restrito e autenticado para a equipe de RH, administração e operações.</span>
+            </div>
 
-                  {/* Topo do documento com branding da empresa */}
-                  <div className="bg-[#0b121e] px-5 py-4 relative border-b border-red-600">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-1.5 text-[9px] font-extrabold tracking-wider uppercase text-red-400">
-                          <span>Distribuidora Irmãos Barreiro</span>
-                          <span>•</span>
-                          <span>RH Oficial</span>
-                        </div>
-                        <div className="text-sm font-black text-white mt-0.5 tracking-tight">
-                          Ficha Cadastral do Colaborador
-                        </div>
+            {/* Barra dos 4 Pilares Operacionais */}
+            <div className="w-full border border-white/10 bg-slate-950/60 backdrop-blur-sm rounded-sm overflow-hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10 text-left">
+              {pillars.map((p, i) => {
+                const PillarIcon = p.icon;
+                return (
+                  <div key={i} className="p-5 hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="w-7 h-7 rounded bg-red-950/70 border border-red-700/50 flex items-center justify-center text-red-400 shrink-0">
+                        <PillarIcon className="w-3.5 h-3.5" />
                       </div>
-                      <div className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Ativo</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Corpo do Documento com Dados Reais */}
-                  <div className="p-4 sm:p-5 space-y-3.5 bg-slate-50/60">
-
-                    {/* Perfil com Avatar e Ocupação Real */}
-                    <div className="flex items-center gap-3 p-2.5 rounded-md bg-white border border-slate-200/90 shadow-xs">
-                      <div className="w-10 h-10 rounded-full bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                        FS
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-bold text-slate-900 truncate text-xs">
-                          Francisco Silva de Oliveira
-                        </div>
-                        <div className="text-[11px] text-slate-500 truncate">
-                          Diarista Operacional · Expedição e Carga
-                        </div>
-                      </div>
-                      <span className="text-[9px] uppercase tracking-wider bg-red-50 text-red-700 font-bold px-1.5 py-0.5 rounded border border-red-100">
-                        Diarista
+                      <span className="font-bold text-white text-xs">
+                        {p.title}
                       </span>
                     </div>
-
-                    {/* Grid com CPF e Data de Nascimento / Local */}
-                    <div className="grid grid-cols-2 gap-2 text-[11px]">
-                      <div className="p-2 rounded-md bg-white border border-slate-200/90">
-                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider mb-0.5">
-                          CPF Validado
-                        </span>
-                        <span className="font-bold text-slate-800 font-mono">
-                          048.***.923-14
-                        </span>
-                      </div>
-                      <div className="p-2 rounded-md bg-white border border-slate-200/90">
-                        <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider mb-0.5">
-                          Nascimento / Cidade
-                        </span>
-                        <span className="font-semibold text-slate-800">
-                          12/06/1993 · Cascavel
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Chave PIX Formatada e Verificada */}
-                    <div className="p-2.5 rounded-md bg-white border border-slate-200/90">
-                      <div className="flex items-center justify-between text-[9px] uppercase font-bold text-slate-400 mb-1">
-                        <span>Chave PIX Cadastrada</span>
-                        <span className="text-emerald-700 font-bold lowercase flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verificada
-                        </span>
-                      </div>
-                      <div className="font-mono font-bold text-slate-900 text-xs flex items-center justify-between">
-                        <span>(85) 98842-1092</span>
-                        <span className="text-[10px] text-slate-500 font-sans font-normal">Tipo: Celular</span>
-                      </div>
-                    </div>
-
-                    {/* Termo e Aceite LGPD Registrado */}
-                    <div className="flex items-start gap-2 p-2 rounded-md bg-emerald-50/70 border border-emerald-200 text-[10px] text-emerald-950">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <div className="leading-tight">
-                        <span className="font-bold">Termo de Privacidade LGPD Aceito:</span> Consentimento digital registrado para processamento operacional.
-                      </div>
-                    </div>
-
-                    {/* Botão de Geração com Ícone Oficial */}
-                    <div className="pt-0.5">
-                      <div className="w-full bg-red-700 hover:bg-red-800 text-white font-bold text-[11px] py-2.5 px-3 rounded shadow-xs flex items-center justify-center gap-2 transition-colors">
-                        <FileCheck className="w-3.5 h-3.5" />
-                        <span>Ficha Cadastral Oficial em PDF</span>
-                      </div>
-                    </div>
-
-                    {/* Metadados: Protocolo, Hash e Município */}
-                    <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-[9px] text-slate-500 font-mono">
-                      <div>
-                        <span className="font-bold text-slate-700">PROTOCOLO:</span> #IB-2026-0842
-                      </div>
-                      <div className="text-slate-500">
-                        Cascavel · CE
-                      </div>
-                    </div>
-
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      {p.desc}
+                    </p>
                   </div>
-                </div>
-              </div>
-
+                );
+              })}
             </div>
+
           </div>
         </div>
 
         {/* ================================================================= */}
         {/* O QUE VOCÊ PODE FAZER AQUI — 6 MÓDULOS REAIS DO SISTEMA           */}
         {/* ================================================================= */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
+        <div id="modulos" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 scroll-mt-6">
 
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest block mb-1">
                 Recursos do Sistema
@@ -304,7 +231,7 @@ export default function Historia({ isLoggedIn, onOpenLogin }) {
                 <div
                   key={idx}
                   onClick={handleModuleClick}
-                  className="group bg-slate-950/70 hover:bg-slate-900/90 p-6 sm:p-7 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                  className="group bg-slate-950/75 hover:bg-slate-900/95 p-6 sm:p-7 transition-all duration-200 cursor-pointer flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
