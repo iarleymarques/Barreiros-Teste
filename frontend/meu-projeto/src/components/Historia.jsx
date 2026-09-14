@@ -1,137 +1,186 @@
 import React from 'react';
-import { MapPin, LogIn, LayoutDashboard } from 'lucide-react';
+import { LogIn, LayoutDashboard, UserPlus, FileText, Banknote, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const features = [
+  {
+    icon: UserPlus,
+    title: 'Cadastro de Diaristas',
+    desc: 'Registro completo com dados pessoais, endereço e foto do colaborador temporário.',
+  },
+  {
+    icon: Banknote,
+    title: 'Dados Bancários & PIX',
+    desc: 'Coleta segura de conta bancária ou chave PIX para processamento de pagamentos.',
+  },
+  {
+    icon: FileText,
+    title: 'Comprovante em PDF',
+    desc: 'Geração automática do recibo cadastral com protocolo exclusivo e carimbo digital.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Conformidade LGPD',
+    desc: 'Aceite de termos de privacidade registrado antes de qualquer coleta de dados.',
+  },
+];
 
 export default function Historia({ isLoggedIn, onOpenLogin }) {
   const navigate = useNavigate();
 
   return (
-    <section id="historia">
+    <section id="historia" className="bg-white">
 
-      {/* ================================================================== */}
-      {/* 1. HERO INSTITUCIONAL                                               */}
-      {/* ================================================================== */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-14 sm:pt-20 sm:pb-16">
-        <div className="max-w-3xl">
-
-          {/* Linha de acento */}
-          <div className="w-10 h-0.5 bg-red-700 mb-8"></div>
-
-          {/* Headline principal */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#0D0D0D] tracking-tight leading-[1.08] mb-5">
-            Distribuidora<br />
-            Irmãos Barreiro
-          </h1>
-
-          {/* Subtítulo direto */}
-          <p className="text-base sm:text-lg text-slate-500 leading-relaxed max-w-lg mb-8">
-            Atacado de bebidas em Cascavel, Ceará — desde 1997.
-            Abastecimento contínuo de cerveja, chope e refrigerante
-            para o comércio regional.
-          </p>
-
-          {/* CTA único */}
-          {isLoggedIn ? (
-            <button
-              onClick={() => navigate('/portal')}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0D0D0D] hover:bg-slate-800 text-white text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Área do Colaborador
-            </button>
-          ) : (
-            <button
-              onClick={onOpenLogin}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer"
-            >
-              <LogIn className="w-4 h-4" />
-              Entrar
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ================================================================== */}
-      {/* 2. FAIXA DE NÚMEROS-CHAVE (sem ícones, sem cards)                  */}
-      {/* ================================================================== */}
-      <div className="border-y border-slate-200 bg-white">
+      {/* ================================================================= */}
+      {/* HERO — Split layout: texto esquerdo, mock de documento direito     */}
+      {/* ================================================================= */}
+      <div className="border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-200">
+          <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[540px] items-stretch">
 
-            <div className="py-7 px-6 sm:px-8">
-              <div className="text-2xl sm:text-3xl font-black text-[#0D0D0D] tabular-nums">1997</div>
-              <div className="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Fundação</div>
+            {/* Coluna esquerda: conteúdo */}
+            <div className="flex flex-col justify-center py-16 sm:py-20 lg:pr-16">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-5">
+                Sistema Interno · Área de RH
+              </span>
+
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#0D0D0D] tracking-tight leading-[1.1] mb-4">
+                Cadastro e gestão<br className="hidden sm:block" /> de diaristas
+              </h1>
+
+              <p className="text-sm sm:text-base text-slate-500 leading-relaxed max-w-md mb-8">
+                Preenchimento guiado por etapas, registro de dados bancários e chave PIX,
+                aceite LGPD e emissão automática de comprovante em PDF.
+              </p>
+
+              {/* CTA único */}
+              {isLoggedIn ? (
+                <div>
+                  <button
+                    onClick={() => navigate('/portal')}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#0D0D0D] hover:bg-slate-800 text-white text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Acessar o Portal
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <button
+                    onClick={onOpenLogin}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-red-700 hover:bg-red-800 text-white text-sm font-bold tracking-wide transition-colors duration-150 cursor-pointer"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    Entrar no Sistema
+                  </button>
+                  <p className="mt-3 text-xs text-slate-400">
+                    Acesso restrito à equipe de RH autorizada.
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="py-7 px-6 sm:px-8">
-              <div className="text-2xl sm:text-3xl font-black text-[#0D0D0D]">~30 anos</div>
-              <div className="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">No mercado</div>
-            </div>
+            {/* Coluna direita: mock de formulário/documento */}
+            <div className="hidden lg:flex items-center justify-center bg-slate-50 border-l border-slate-200 py-16 px-12">
+              {/* Documento estilizado — ilustração tipográfica, sem imagens externas */}
+              <div className="w-full max-w-sm bg-white border border-slate-200 shadow-sm">
 
-            <div className="py-7 px-6 sm:px-8">
-              <div className="text-2xl sm:text-3xl font-black text-[#0D0D0D]">Atacado</div>
-              <div className="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Segmento</div>
-            </div>
+                {/* Cabeçalho do documento */}
+                <div className="bg-[#0D0D0D] px-5 py-4 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Portal RH</div>
+                    <div className="text-sm font-bold text-white mt-0.5">Comprovante Cadastral</div>
+                  </div>
+                  <div className="w-7 h-7 border border-red-600 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-red-600"></div>
+                  </div>
+                </div>
 
-            <div className="py-7 px-6 sm:px-8">
-              <div className="text-2xl sm:text-3xl font-black text-[#0D0D0D]">Cascavel</div>
-              <div className="text-xs text-slate-400 font-medium mt-1 uppercase tracking-wider">Ceará · Sede</div>
+                {/* Corpo: campos de formulário simulados */}
+                <div className="px-5 py-5 space-y-4">
+
+                  {[
+                    { label: 'Nome completo', width: 'w-full' },
+                    { label: 'CPF', width: 'w-2/3' },
+                    { label: 'Data de nascimento', width: 'w-1/2' },
+                  ].map((field, i) => (
+                    <div key={i}>
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                        {field.label}
+                      </div>
+                      <div className={`h-2 bg-slate-200 ${field.width}`}></div>
+                    </div>
+                  ))}
+
+                  {/* Seção PIX */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                      Chave PIX
+                    </div>
+                    <div className="h-2 bg-slate-200 w-4/5"></div>
+                  </div>
+
+                  {/* Checkbox LGPD */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2.5">
+                    <div className="w-3.5 h-3.5 border border-red-700 flex items-center justify-center shrink-0">
+                      <div className="w-2 h-2 bg-red-700"></div>
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-medium">
+                      Aceite de Política de Privacidade
+                    </div>
+                  </div>
+
+                  {/* Botão simulado */}
+                  <div className="pt-2">
+                    <div className="bg-red-700 text-center py-2.5">
+                      <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                        Emitir Comprovante em PDF
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Protocolo */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="text-[9px] text-slate-300 font-mono">Protocolo #IB-2026-XXXX</div>
+                    <div className="text-[9px] text-slate-300 font-mono">Cascavel · CE</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
         </div>
       </div>
 
-      {/* ================================================================== */}
-      {/* 3. BLOCO INSTITUCIONAL ÚNICO                                        */}
-      {/* ================================================================== */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* ================================================================= */}
+      {/* O QUE VOCÊ PODE FAZER AQUI — 4 blocos funcionais                  */}
+      {/* ================================================================= */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
 
-          {/* Texto institucional */}
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[#0D0D0D] tracking-tight leading-snug mb-6">
-              Um elo consolidado na cadeia de distribuição de bebidas do interior cearense
-            </h2>
-
-            <p className="text-slate-600 text-base leading-relaxed mb-6">
-              Com sede no <span className="text-slate-900 font-semibold">Distrito Industrial de Cascavel</span>,
-              a Distribuidora Irmãos Barreiro recebe e distribui as linhas da Solar Coca-Cola e demais marcas
-              parceiras, garantindo abastecimento constante a bares, restaurantes, mercados e pontos de venda
-              da cidade e região.
-            </p>
-
-            <p className="text-slate-600 text-base leading-relaxed mb-10">
-              Em quase três décadas de operação contínua, a empresa firmou sua reputação sobre pontualidade
-              nas entregas, integralidade dos produtos e relacionamento direto com o comércio local.
-            </p>
-
-            {/* Endereço */}
-            <div className="flex items-start gap-2.5 text-sm text-slate-500">
-              <MapPin className="w-4 h-4 text-red-700 mt-0.5 shrink-0" />
-              <span>
-                Rua João Damasceno Fontenele, nº 5003<br />
-                Distrito Industrial — Cascavel, CE
-              </span>
-            </div>
-          </div>
-
-          {/* Imagem corporativa */}
-          <div className="relative overflow-hidden bg-slate-100">
-            <img
-              src="/images/copo_refrigerante.jpg"
-              alt="Distribuição de Bebidas — Distribuidora Irmãos Barreiro, Cascavel CE"
-              className="w-full h-80 sm:h-96 lg:h-[440px] object-cover object-center"
-            />
-            {/* Etiqueta discreta */}
-            <div className="absolute bottom-0 left-0 right-0 bg-[#0D0D0D]/80 backdrop-blur-sm px-5 py-3">
-              <p className="text-white text-xs font-medium tracking-wide">
-                Distribuidora Irmãos Barreiro · Cascavel — CE
-              </p>
-            </div>
-          </div>
-
+        <div className="mb-8">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+            O que você pode fazer aqui
+          </h2>
+          <div className="w-8 h-0.5 bg-red-700 mt-2"></div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 border border-slate-200">
+          {features.map((f, idx) => {
+            const Icon = f.icon;
+            return (
+              <div key={idx} className="px-6 py-7 hover:bg-slate-50 transition-colors duration-100">
+                <Icon className="w-5 h-5 text-red-700 mb-4 stroke-[1.5]" />
+                <h3 className="text-sm font-bold text-[#0D0D0D] mb-1.5">
+                  {f.title}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {f.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
       </div>
 
     </section>
