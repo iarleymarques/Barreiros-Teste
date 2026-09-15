@@ -40,19 +40,19 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 py-3.5">
+      <header className="sticky top-0 z-40 border-b border-[#2c3035] bg-[#101214]/95 py-3.5 text-white backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           
           {/* Esquerda: Logo + Nome do Sistema */}
           <div className="flex items-center gap-3">
-            <Logo className="h-9 sm:h-10" />
+            <Logo isDark={true} className="h-9 sm:h-10" />
             <div className="hidden sm:flex items-center gap-3">
-              <div className="w-px h-6 bg-slate-200"></div>
+              <div className="h-6 w-px bg-[#2c3035]"></div>
               <div>
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest leading-none">
+                <div className="font-condensed text-sm font-bold uppercase leading-none tracking-wide text-white">
                   Portal RH
                 </div>
-                <div className="text-xs font-semibold text-slate-700 leading-tight">
+                <div className="text-xs font-semibold leading-tight text-[#8d9096]">
                   Irmãos Barreiro
                 </div>
               </div>
@@ -65,7 +65,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate('/portal')}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-red-600 hover:bg-red-700 transition-colors duration-150 cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-[#e3141a] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-red-700 sm:text-sm"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Área do Colaborador</span>
@@ -73,7 +73,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
 
                 <button
                   onClick={onLogout}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-red-700 border border-slate-200 hover:border-red-200 bg-white transition-colors duration-150 cursor-pointer"
+                  className="inline-flex items-center gap-2 border border-[#2c3035] px-3.5 py-2 text-xs font-semibold text-[#f2f2ef] transition-colors hover:border-[#e3141a] hover:text-[#e3141a] sm:text-sm"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Sair</span>
@@ -82,7 +82,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
             ) : (
               <button
                 onClick={() => setIsLoginOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-red-700 hover:bg-red-800 transition-colors duration-150 cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#e3141a] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Entrar</span>

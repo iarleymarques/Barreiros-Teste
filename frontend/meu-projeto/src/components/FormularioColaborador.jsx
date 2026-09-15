@@ -1070,18 +1070,23 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
     <div className="w-full space-y-4">
       {/* Botão de retorno ao Menu de Módulos (Hub) */}
       {onBack && (
-        <div className="no-print flex items-center justify-between bg-white/80 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-zinc-200/80 shadow-xs">
+        <div className="no-print flex items-center justify-between bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-zinc-200 shadow-sm">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-zinc-700 hover:text-red-600 transition cursor-pointer"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-zinc-600 hover:text-red-600 transition-all group cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-zinc-100 group-hover:bg-red-50 group-hover:text-red-600 transition-all">
+              <ArrowLeft className="w-4 h-4" />
+            </span>
             <span>Voltar ao Menu Principal</span>
           </button>
-          <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider hidden sm:inline">
-            Relatório com Dados Individuais
-          </span>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-zinc-100 border border-zinc-200 text-zinc-500 text-[11px] font-semibold uppercase tracking-widest px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Relatório Individual
+            </span>
+          </div>
         </div>
       )}
 
@@ -1663,16 +1668,43 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
           </div>
 
           {/* CARD PRINCIPAL EM GRID */}
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-white/80 shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[480px]">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-zinc-200/80 shadow-2xl shadow-zinc-200/60 overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[520px]">
 
             {/* SIDEBAR ESQUERDA (DESKTOP >= md) */}
-            <div className="hidden md:flex md:col-span-4 bg-zinc-900 p-6 flex-col justify-between border-r border-zinc-800 text-white">
-              <div className="space-y-3">
-                <div className="px-3 py-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-zinc-400">
-                  <span>Etapas do Cadastro</span>
-                  <span className="text-zinc-500 font-mono">{currentStep}/{steps.length}</span>
+            <div className="hidden md:flex md:col-span-4 flex-col justify-between border-r border-zinc-800/60 text-white relative overflow-hidden"
+              style={{ background: 'linear-gradient(165deg, #111827 0%, #0f172a 60%, #1a0a0a 100%)' }}
+            >
+              {/* Decoração de fundo */}
+              <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-10 blur-3xl" style={{ background: 'radial-gradient(circle, #ef233c 0%, transparent 70%)' }} />
+              <div className="absolute bottom-10 left-0 w-32 h-32 rounded-full opacity-5 blur-2xl" style={{ background: 'radial-gradient(circle, #ef233c 0%, transparent 70%)' }} />
+
+              <div className="relative p-6 space-y-5">
+                {/* Header da sidebar */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-red-400/80">Portal RH</p>
+                    <h4 className="text-sm font-black text-white mt-0.5 tracking-tight">Etapas do Cadastro</h4>
+                  </div>
+                  <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/5 border border-white/10 font-mono text-xs font-black text-white">
+                    {currentStep}/{steps.length}
+                  </span>
                 </div>
 
+                {/* Barra de progresso total */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                    <span>Progresso</span>
+                    <span className="text-red-400">{Math.round((currentStep / steps.length) * 100)}% concluído</span>
+                  </div>
+                  <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${(currentStep / steps.length) * 100}%`, background: 'linear-gradient(90deg, #ef233c, #f87171)' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Steps */}
                 <div className="space-y-2">
                   {steps.map((step) => {
                     const Icon = step.icon;
@@ -1686,99 +1718,107 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                         type="button"
                         onClick={() => handleStepClick(step.id)}
                         disabled={!isClickable}
-                        className={`w-full flex items-center gap-3 px-3.5 py-3.5 rounded-2xl text-left text-xs font-semibold transition-all duration-200 ${
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left text-xs font-semibold transition-all duration-200 ${
                           isActive
-                            ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 font-bold scale-[1.02]'
+                            ? 'text-white shadow-lg shadow-red-600/30'
                             : isPast
-                            ? 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-800 hover:text-white cursor-pointer'
+                            ? 'bg-white/5 text-zinc-200 hover:bg-white/10 hover:text-white cursor-pointer border border-white/5'
                             : isClickable
-                            ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 cursor-pointer'
-                            : 'text-zinc-500 opacity-50 cursor-not-allowed'
+                            ? 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5 cursor-pointer'
+                            : 'text-zinc-600 opacity-50 cursor-not-allowed'
                         }`}
+                        style={isActive ? { background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', border: '1px solid rgba(239,35,60,0.4)' } : {}}
                       >
-                        <div className={`p-2 rounded-xl shrink-0 ${
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-xl shrink-0 text-[11px] font-black transition-all ${
                           isActive
                             ? 'bg-white/20 text-white'
                             : isPast
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-zinc-800 text-zinc-400'
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                            : 'bg-white/5 text-zinc-500 border border-white/10'
                         }`}>
                           {isPast ? (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <CheckCircle2 className="w-4 h-4" />
                           ) : (
                             <Icon className="w-4 h-4" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <span className="block truncate font-bold text-[13px]">{step.title}</span>
-                          <span className="text-[11px] font-normal opacity-80 block mt-0.5">
-                            {isActive ? 'Em preenchimento' : isPast ? 'Concluído' : 'Pendente'}
+                          <span className="block truncate font-bold text-[12.5px] leading-tight">{step.title}</span>
+                          <span className="text-[10px] font-normal block mt-0.5 opacity-70">
+                            {isActive ? 'Em preenchimento' : isPast ? '✓ Concluído' : `Etapa ${step.id} de ${steps.length}`}
                           </span>
                         </div>
 
-                        <div>
-                          {isPast ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
-                              ✓
-                            </span>
-                          ) : isActive ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-black/20 text-white">
-                              {Math.round((currentStep / steps.length) * 100)}%
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-mono text-zinc-500">
-                              {step.id}/{steps.length}
-                            </span>
-                          )}
-                        </div>
+                        {isPast && (
+                          <span className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          </span>
+                        )}
+                        {isActive && (
+                          <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Informação no rodapé da sidebar */}
-              <div className="pt-5 mt-4 border-t border-zinc-800 text-xs text-zinc-400 space-y-1">
-                <div className="flex items-center gap-2 text-zinc-300 font-semibold">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <span>Navegação Rápida</span>
+              {/* Rodapé da sidebar */}
+              <div className="relative p-6 border-t border-white/5">
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/8">
+                  <div className="w-8 h-8 rounded-xl bg-red-600/20 border border-red-500/20 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-200 mb-0.5">Navegação livre</p>
+                    <p className="text-[10.5px] text-zinc-500 leading-relaxed">
+                      Volte nas etapas concluídas para revisar dados a qualquer momento.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Clique nas etapas concluídas para revisar ou ajustar qualquer informação a qualquer momento.
-                </p>
               </div>
             </div>
 
             {/* PAINEL DIREITO (Conteúdo do Formulário) */}
-            <div className="md:col-span-8 p-6 sm:p-8 md:p-10 flex flex-col justify-between bg-white">
-              <form onSubmit={handleNext} className="space-y-6 flex-1 flex flex-col justify-between">
+            <div className="md:col-span-8 flex flex-col justify-between bg-white">
+              <form onSubmit={handleNext} className="flex-1 flex flex-col justify-between">
 
-                <div>
+                <div className="p-6 sm:p-8 md:p-10 space-y-6">
                   {/* Cabeçalho da Etapa Ativa */}
-                  <div className="mb-5 pb-4 border-b border-zinc-100 flex items-start justify-between">
-                    <div>
-                      <h3 className="text-2xl font-black text-zinc-950 tracking-tight">
-                        {steps[currentStep - 1]?.title || 'Cadastro'}
-                      </h3>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        Etapa {currentStep} de {steps.length} • Preencha os campos com atenção
-                      </p>
-                    </div>
+                  <div>
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-red-500">Etapa {currentStep} de {steps.length}</span>
+                        </div>
+                        <h3 className="text-[22px] font-black text-zinc-950 tracking-tight leading-tight">
+                          {steps[currentStep - 1]?.title || 'Cadastro'}
+                        </h3>
+                        <p className="text-xs text-zinc-400 font-medium">
+                          Preencha os campos com atenção
+                        </p>
+                      </div>
 
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200">
-                        <span>{Math.round((currentStep / steps.length) * 100)}% Concluído</span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-red-50 to-rose-50 text-red-600 border border-red-200/80 shadow-sm shrink-0">
+                        {Math.round((currentStep / steps.length) * 100)}% Concluído
                       </span>
                     </div>
-                  </div>
 
-                  {/* Barra de Progresso Fina */}
-                  <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden mb-6">
-                    <div
-                      className="bg-red-600 h-full transition-all duration-300 rounded-full"
-                      style={{ width: `${(currentStep / steps.length) * 100}%` }}
-                    />
+                    {/* Barra de Progresso Segmentada */}
+                    <div className="flex gap-1.5 mt-4">
+                      {steps.map((step) => (
+                        <div key={step.id} className="h-1 flex-1 rounded-full overflow-hidden bg-zinc-100">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: currentStep > step.id ? '100%' : currentStep === step.id ? '60%' : '0%',
+                              background: currentStep > step.id ? '#16a34a' : 'linear-gradient(90deg, #ef233c, #f87171)'
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* ============================================================ */}
@@ -2719,12 +2759,12 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                 </div>
 
                 {/* BOTÕES DE NAVEGAÇÃO */}
-                <div className="pt-6 border-t border-zinc-100 flex items-center justify-between gap-3">
+                <div className="px-6 sm:px-8 md:px-10 py-5 border-t border-zinc-100 bg-zinc-50/50 flex items-center justify-between gap-3">
                   {currentStep > 1 ? (
                     <button
                       type="button"
                       onClick={handlePrev}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-zinc-700 hover:text-zinc-950 bg-zinc-100 hover:bg-zinc-200 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-zinc-600 hover:text-zinc-900 bg-white hover:bg-zinc-100 border border-zinc-200 hover:border-zinc-300 shadow-sm transition-all cursor-pointer"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       <span>Voltar</span>
@@ -2736,7 +2776,8 @@ export default function FormularioColaborador({ userEmail = '', onLogout, onBack
                   <button
                     type="submit"
                     disabled={currentStep === 4 && formData.tipoPessoa === 'fisica' && !formData.aceitouTermos}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-600/25 hover:shadow-red-600/35 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white shadow-lg shadow-red-600/30 hover:shadow-red-600/45 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg, #ef233c 0%, #c9182e 100%)' }}
                   >
                     <span>{currentStep === steps.length ? 'Concluir Cadastro' : 'Continuar'}</span>
                     <ArrowRight className="w-4 h-4" />
