@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import FormularioColaborador from './FormularioColaborador';
@@ -8,263 +8,562 @@ import ReciboIndividual from './ReciboIndividual';
 import RelatorioSolar from './RelatorioSolar';
 import RegistroFuncionarios from './RegistroFuncionarios';
 import PermissaoTrabalhos from './PermissaoTrabalhos';
-import { getDiaristasApi, createDiaristaApi, toggleStatusPagoApi, deleteDiaristaApi, resetDiaristasApi } from '../services/api';
-import { ArrowRight, Briefcase, FileText, LayoutGrid, LogOut, Receipt, ShieldAlert, Sun, Users } from 'lucide-react';
-
-const moduleItems = [
-  {
-    num: '01',
-    id: 'MOD-01',
-    key: 'formulario',
-    title: 'Cadastro do colaborador',
-    desc: 'Admissão com dados pessoais, endereço, documentos e chave PIX, gerando a ficha oficial em PDF.',
-    action: 'Emitir ficha cadastral',
-  },
-  {
-    num: '02',
-    id: 'MOD-02',
-    key: 'relacao',
-    title: 'Lançamento da diária',
-    desc: 'Conferência diária de presença e pagamento, com cálculo automático por diária trabalhada.',
-    action: 'Gerenciar diárias',
-  },
-  {
-    num: '03',
-    id: 'MOD-03',
-    key: 'recibo',
-    title: 'Emissão do recibo',
-    desc: 'Recibo com validade jurídica gerado automaticamente após a confirmação do pagamento.',
-    action: 'Emitir recibos',
-  },
-  {
-    num: '04',
-    id: 'MOD-04',
-    key: 'solar',
-    title: 'Relatório consolidado',
-    desc: 'Fechamento Solar mensal com histórico acumulado de diárias e valores da operação.',
-    action: 'Gerar relatórios',
-  },
-  {
-    num: '05',
-    id: 'MOD-05',
-    key: 'registro_funcionarios',
-    title: 'Registro de funcionários',
-    desc: 'Histórico contínuo, data de entrada, diárias prestadas e valor total acumulado.',
-    action: 'Consultar histórico',
-  },
-  {
-    num: '06',
-    id: 'MOD-06',
-    key: 'pts',
-    title: 'Permissões de trabalho (PTs)',
-    desc: 'Emissão e gestão de PTs obrigatórias de segurança antes do início de operações de risco em campo.',
-    action: 'Emitir PTs de segurança',
-  },
-];
-
+import Footer from './Footer';
+import { 
+  getDiaristasApi, 
+  createDiaristaApi, 
+  toggleStatusPagoApi, 
+  deleteDiaristaApi, 
+  resetDiaristasApi 
+} from '../services/api';
+import { 
+  LogOut, 
+  UserCheck, 
+  FileText, 
+  Users, 
+  Receipt, 
+  ArrowRight, 
+  LayoutGrid,
+  Sun,
+  Briefcase,
+  ShieldAlert
+} from 'lucide-react';
 
 export default function PortalColaborador({ user, onLogout }) {
   const navigate = useNavigate();
-  const [activeModule, setActiveModule] = useState('hub');
+  const [activeModule, setActiveModule] = useState('hub'); // 'hub' | 'formulario' | 'relacao' | 'cadastrar_diarista' | 'recibo'
   const [selectedDiaristaForRecibo, setSelectedDiaristaForRecibo] = useState(null);
-  const [diaristas, setDiaristas] = useState([]);
-  const [dataSelecionada, setDataSelecionada] = useState(() => new Date().toISOString().split('T')[0]);
 
+  // Lista de diaristas persistida no PostgreSQL
+  const [diaristas, setDiaristas] = useState([]);
+
+  // Data selecionada ativa para a relação diária
+  const [dataSelecionada, setDataSelecionada] = useState(() => {
+    const hoje = new Date().toISOString().split('T')[0];
+    return hoje;
+  });
+
+  // Carrega diárias do PostgreSQL apenas quando o módulo de relação estiver ativo
   useEffect(() => {
-    if (!['relacao', 'solar', 'recibo'].includes(activeModule)) return;
+    const modulosQueUsaDiaristas = ['relacao', 'solar', 'recibo'];
+    if (!modulosQueUsaDiaristas.includes(activeModule)) return;
     async function carregarDiaristas() {
       try {
         const dados = await getDiaristasApi();
-        if (Array.isArray(dados)) setDiaristas(dados.map(d => ({ id: d.id, nome: d.nome, valor: d.valor_diaria, diarias: d.quantidade_diarias, total: d.valor_total, pix: d.chave_pix, tipoPix: d.tipo_pix, motorista: d.profissao, profissao: d.profissao, data: d.data, observacoes: d.observacoes, pago: d.pago, createdAt: d.created_at })));
-      } catch (err) { console.warn('Backend operando offline ou conectando...', err); }
+        if (dados && Array.isArray(dados)) {
+          // Mapeia os campos do backend para o formato esperado pelo frontend
+          const formatados = dados.map(d => ({
+            id: d.id,
+            nome: d.nome,
+            valor: d.valor_diaria,
+            diarias: d.quantidade_diarias,
+            total: d.valor_total,
+            pix: d.chave_pix,
+            tipoPix: d.tipo_pix,
+            motorista: d.profissao,
+            profissao: d.profissao,
+            data: d.data,
+            observacoes: d.observacoes,
+            pago: d.pago,
+            createdAt: d.created_at
+          }));
+          setDiaristas(formatados);
+        }
+      } catch (err) {
+        console.warn("Backend operando offline ou conectando...", err);
+      }
     }
     carregarDiaristas();
   }, [activeModule]);
 
-  const handleUpdateDiarista = updated => setDiaristas(prev => prev.map(d => d.id === updated.id ? { ...d, ...updated } : d));
-  const handleExit = () => { onLogout?.(); navigate('/'); };
-  const openModule = item => { if (item.key === 'recibo') setSelectedDiaristaForRecibo(null); setActiveModule(item.key); };
-  async function handleAddDiarista(novo) {
+  function handleUpdateDiarista(updatedDiarista) {
+    setDiaristas((prev) =>
+      prev.map((d) => (d.id === updatedDiarista.id ? { ...d, ...updatedDiarista } : d))
+    );
+  }
+
+  function handleExit() {
+    if (onLogout) onLogout();
+    navigate('/');
+  }
+
+  async function handleAddDiarista(novoDiarista) {
     try {
-      const salvo = await createDiaristaApi({ funcionario_id: novo.funcionario_id || null, nome: novo.nome, profissao: novo.motorista || novo.profissao || '', data: novo.data, valor_diaria: parseFloat(novo.valor) || 0, quantidade_diarias: parseInt(novo.diarias, 10) || 1, tipo_pix: novo.tipoPix || 'cpf', chave_pix: novo.pix || novo.chavePix || '', observacoes: novo.observacoes || '', pago: !!novo.pago });
-      setDiaristas(prev => [{ id: salvo.id, nome: salvo.nome, valor: salvo.valor_diaria, diarias: salvo.quantidade_diarias, total: salvo.valor_total, pix: salvo.chave_pix, tipoPix: salvo.tipo_pix, motorista: salvo.profissao, profissao: salvo.profissao, data: salvo.data, observacoes: salvo.observacoes, pago: salvo.pago, createdAt: salvo.created_at }, ...prev]);
-      if (salvo.data) setDataSelecionada(salvo.data);
-    } catch (err) { console.error('Erro ao salvar diária no backend:', err); setDiaristas(prev => [novo, ...prev]); if (novo.data) setDataSelecionada(novo.data); }
+      const payloadBackend = {
+        funcionario_id: novoDiarista.funcionario_id || null,
+        nome: novoDiarista.nome,
+        profissao: novoDiarista.motorista || novoDiarista.profissao || '',
+        data: novoDiarista.data,
+        valor_diaria: parseFloat(novoDiarista.valor) || 0,
+        quantidade_diarias: parseInt(novoDiarista.diarias, 10) || 1,
+        tipo_pix: novoDiarista.tipoPix || 'cpf',
+        chave_pix: novoDiarista.pix || novoDiarista.chavePix || '',
+        observacoes: novoDiarista.observacoes || '',
+        pago: !!novoDiarista.pago
+      };
+      
+      const salvo = await createDiaristaApi(payloadBackend);
+      const itemFormatado = {
+        id: salvo.id,
+        nome: salvo.nome,
+        valor: salvo.valor_diaria,
+        diarias: salvo.quantidade_diarias,
+        total: salvo.valor_total,
+        pix: salvo.chave_pix,
+        tipoPix: salvo.tipo_pix,
+        motorista: salvo.profissao,
+        profissao: salvo.profissao,
+        data: salvo.data,
+        observacoes: salvo.observacoes,
+        pago: salvo.pago,
+        createdAt: salvo.created_at
+      };
+
+      setDiaristas((prev) => [itemFormatado, ...prev]);
+      if (salvo.data) {
+        setDataSelecionada(salvo.data);
+      }
+    } catch (err) {
+      console.error("Erro ao salvar diária no backend:", err);
+      setDiaristas((prev) => [novoDiarista, ...prev]);
+      if (novoDiarista.data) setDataSelecionada(novoDiarista.data);
+    }
     setActiveModule('relacao');
   }
-  async function handleToggleStatus(id) { setDiaristas(prev => prev.map(d => d.id === id ? { ...d, pago: !d.pago } : d)); try { await toggleStatusPagoApi(id); } catch (err) { console.warn('Erro ao sincronizar status:', err); } }
-  async function handleDeleteDiarista(id) { if (window.confirm('Deseja realmente remover este diarista da relação?')) { setDiaristas(prev => prev.filter(d => d.id !== id)); try { await deleteDiaristaApi(id); } catch (err) { console.warn('Erro ao remover no backend:', err); } } }
-  function handleEmitirReciboDireto(diarista) { setSelectedDiaristaForRecibo(diarista); setActiveModule('recibo'); }
-  async function handleResetDiaristas() { if (window.confirm('Deseja limpar toda a relação de diaristas?')) { setDiaristas([]); setDataSelecionada(new Date().toISOString().split('T')[0]); try { await resetDiaristasApi(); } catch (err) { console.warn('Erro ao resetar no backend:', err); } } }
 
-  const content = activeModule === 'formulario' ? <FormularioColaborador userEmail={user?.email} onLogout={handleExit} onBack={() => setActiveModule('hub')} />
-    : activeModule === 'relacao' ? <RelacaoDiaristas diaristas={diaristas} dataSelecionada={dataSelecionada} setDataSelecionada={setDataSelecionada} onNavigateCadastrar={() => setActiveModule('cadastrar_diarista')} onEmitirRecibo={handleEmitirReciboDireto} onToggleStatus={handleToggleStatus} onUpdateDiarista={handleUpdateDiarista} onDeleteDiarista={handleDeleteDiarista} onResetDiaristas={handleResetDiaristas} onBack={() => setActiveModule('hub')} />
-    : activeModule === 'cadastrar_diarista' ? <CadastrarDiarista dataInicial={dataSelecionada} diaristasExistentes={diaristas} onBack={() => setActiveModule('relacao')} onSave={handleAddDiarista} />
-    : activeModule === 'recibo' ? <ReciboIndividual diaristaInicial={selectedDiaristaForRecibo} diaristas={diaristas} onUpdateDiarista={handleUpdateDiarista} onBack={() => setActiveModule('hub')} />
-    : activeModule === 'solar' ? <RelatorioSolar diaristas={diaristas} onBack={() => setActiveModule('hub')} />
-    : activeModule === 'registro_funcionarios' ? <RegistroFuncionarios onBack={() => setActiveModule('hub')} />
-    : activeModule === 'pts' ? <PermissaoTrabalhos onBack={() => setActiveModule('hub')} /> : null;
+  async function handleToggleStatus(id) {
+    setDiaristas((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, pago: !d.pago } : d))
+    );
+    try {
+      await toggleStatusPagoApi(id);
+    } catch (err) {
+      console.warn("Erro ao sincronizar status com backend:", err);
+    }
+  }
+
+  async function handleDeleteDiarista(id) {
+    if (window.confirm('Deseja realmente remover este diarista da relação?')) {
+      setDiaristas((prev) => prev.filter((d) => d.id !== id));
+      try {
+        await deleteDiaristaApi(id);
+      } catch (err) {
+        console.warn("Erro ao remover no backend:", err);
+      }
+    }
+  }
+
+  function handleEmitirReciboDireto(diarista) {
+    setSelectedDiaristaForRecibo(diarista);
+    setActiveModule('recibo');
+  }
+
+  async function handleResetDiaristas() {
+    if (window.confirm('Deseja limpar toda a relação de diaristas?')) {
+      setDiaristas([]);
+      const hoje = new Date().toISOString().split('T')[0];
+      setDataSelecionada(hoje);
+      try {
+        await resetDiaristasApi();
+      } catch (err) {
+        console.warn("Erro ao resetar no backend:", err);
+      }
+    }
+  }
 
   return (
-    <div className="min-h-screen font-[Manrope,sans-serif]" style={{ background: '#101214', color: '#f2f2ef' }}>
-      <div className="grid min-h-screen lg:grid-cols-[258px_minmax(0,1fr)]">
+    <div className="min-h-screen text-zinc-800 flex flex-col antialiased selection:bg-red-600 selection:text-white bg-zinc-900 relative">
+      {/* Imagem de Fundo Corporativa Fixa com Overlay */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none z-0 no-print"
+        style={{
+          backgroundImage: 'url(/images/fundo_distribuidora_barreiro.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 40%',
+          filter: 'brightness(0.65) contrast(1.12) saturate(1.05)',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-gradient-to-b from-zinc-950/75 via-zinc-900/60 to-zinc-950/85 pointer-events-none z-0 backdrop-blur-[2px] no-print"
+      />
 
-        {/* ── SIDEBAR ── */}
-        <aside className="hidden h-screen flex-col border-r border-[#1e2530] bg-[#0c0f14] lg:sticky lg:top-0 lg:flex">
+      {/* Header do Portal */}
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 shadow-sm py-3.5 no-print">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          
           {/* Logo */}
-          <button onClick={() => setActiveModule('hub')} className="h-16 shrink-0 flex items-center gap-3 px-5 text-left border-b border-[#1e2530] hover:bg-white/[0.02] transition">
-            <Logo isDark className="h-8 shrink-0" />
-            <div className="border-l border-white/10 pl-3">
-              <b className="block text-xs font-black tracking-[0.18em] text-white uppercase">PORTAL RH</b>
-              <small className="block text-[10px] text-[#4d6278] font-mono tracking-wider mt-0.5">IRMÃOS BARREIRO</small>
-            </div>
-          </button>
-
-          {/* Sessão ativa */}
-          <div className="mx-4 mt-4 border border-[#1e2a3a] p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
-            <p className="font-mono text-[9px] tracking-[0.14em] text-[#3a4f63] uppercase mb-1">SESSÃO ATIVA</p>
-            <p className="text-[11px] font-medium text-[#8fa3be] truncate">{user?.email || 'colaborador@irmaosbarreiro.com.br'}</p>
-          </div>
-
-          {/* Nav */}
-          <div className="px-4 mt-5 flex-1 overflow-y-auto">
-            <p className="font-mono text-[9px] tracking-[0.16em] text-[#2d3f50] uppercase mb-2">ACESSO RÁPIDO</p>
-            <nav className="space-y-px">
-              {moduleItems.map(item => {
-                const isActive = activeModule === item.key;
-                const isPt = item.key === 'pts';
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => openModule(item)}
-                    className={`flex w-full items-center gap-3 px-2 py-2.5 text-left text-xs font-medium transition border-l-2 ${
-                      isActive
-                        ? isPt
-                          ? 'border-[#ffc72c] bg-[#ffc72c]/10 text-white'
-                          : 'border-[#e3141a] bg-white/[0.04] text-white'
-                        : 'border-transparent text-[#6b82a0] hover:bg-white/[0.03] hover:text-[#b7bac0]'
-                    }`}
-                  >
-                    <span className={`font-mono text-[9px] font-bold shrink-0 w-12 ${isActive ? (isPt ? 'text-[#ffc72c]' : 'text-[#e3141a]') : (isPt ? 'text-[#ffc72c]/70' : 'text-[#3a4f63]')}`}>{item.id}</span>
-                    <span className="truncate">{item.title}</span>
-                    {isPt && <span className="ml-auto font-mono text-[8px] font-black text-[#ffc72c] border border-[#ffc72c]/50 px-1.5 py-0.5 shrink-0">OBRIG.</span>}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Sair */}
-          <div className="h-14 shrink-0 flex items-center px-4 border-t border-[#1e2530] bg-[#0c0f14]">
-            <button onClick={handleExit} className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-[#6b82a0] hover:text-white transition">
-              <LogOut className="h-3.5 w-3.5 text-[#e3141a]" />
-              <span>Sair da conta</span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setActiveModule('hub')}
+              className="hover:opacity-90 transition cursor-pointer"
+              title="Menu Principal"
+            >
+              <Logo className="h-10 sm:h-12" />
             </button>
           </div>
-        </aside>
 
-        {/* ── CONTEÚDO PRINCIPAL ── */}
-        <div className="flex min-w-0 flex-col" style={{ background: '#101214' }}>
-          {/* Header perfeitamente alinhado com o topo da sidebar */}
-          <header className="sticky top-0 z-30 h-16 shrink-0 flex items-center justify-between border-b border-[#1e2530] bg-[#0c0f14] px-5 sm:px-10">
-            <button onClick={() => setActiveModule('hub')} className="lg:hidden">
-              <Logo isDark className="h-8" />
-            </button>
-            <div className="hidden lg:flex items-center gap-2">
-              <span className="font-mono text-[10px] text-[#3a4f63] tracking-wider">PORTAL DO COLABORADOR</span>
-              <span className="text-[#2d3a4a]">/</span>
-              <span className="font-mono text-[10px] font-bold text-[#e3141a] tracking-wider">
-                {activeModule === 'hub' ? 'INÍCIO' : (moduleItems.find(m => m.key === activeModule)?.title || 'PTs').toUpperCase()}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
+          {/* Usuário & Ações */}
+          <div className="flex items-center gap-3">
+            {activeModule !== 'hub' && (
               <button
                 onClick={() => setActiveModule('hub')}
-                className={`${activeModule === 'hub' ? 'hidden' : 'inline-flex'} items-center gap-1.5 border border-[#2c3035] px-3 py-1.5 text-xs font-semibold text-[#6b82a0] transition hover:border-[#e3141a] hover:text-white`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-zinc-700 hover:text-red-600 bg-zinc-100 hover:bg-red-50 border border-zinc-200 hover:border-red-200 shadow-xs transition cursor-pointer"
               >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Menu
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Menu Principal</span>
               </button>
+            )}
+
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-50 border border-red-100 text-xs font-semibold text-red-700">
+              <UserCheck className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <span className="max-w-[140px] sm:max-w-none truncate">
+                {user?.email || 'colaborador@irmaosbarreiro.com.br'}
+              </span>
             </div>
-          </header>
 
-          {/* Hub ou Módulo ativo */}
-          {activeModule === 'hub' ? (
-            <main style={{ background: '#101214' }}>
-              {/* Hero */}
-              <section className="border-b border-[#1e2530] px-5 py-12 sm:px-10">
-                <p className="font-mono text-[10px] font-bold tracking-[0.18em] text-[#e3141a] uppercase mb-3">DISTRIBUIDORA IRMÃOS BARREIRO</p>
-                <h1 className="font-condensed text-4xl font-extrabold uppercase tracking-tight text-white sm:text-5xl">Portal do Colaborador</h1>
-                <p className="mt-3 text-sm text-[#8d9096] max-w-xl leading-relaxed">
-                  Plataforma interna de RH para cadastro, diaristas, recibos, relatórios e permissões de trabalho.
-                </p>
-              </section>
+            <button
+              onClick={handleExit}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-zinc-700 hover:text-red-600 bg-zinc-100 hover:bg-red-50 border border-zinc-200 hover:border-red-200 shadow-xs transition-all cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-              {/* Grid de módulos */}
-              <section className="px-5 py-10 sm:px-10">
-                <div className="mb-7 flex items-end justify-between">
-                  <h2 className="font-condensed text-3xl font-bold uppercase text-white">Módulos disponíveis</h2>
-                  <span className="font-mono text-[10px] font-semibold text-[#ffc72c]">6 MÓDULOS · ACESSO OPERACIONAL</span>
+      {/* Conteúdo Principal */}
+      <main className="flex-grow relative z-10 py-8 sm:py-12 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* ========================================================= */}
+          {/* 1. SEGUNDA TELA - MENU DE BOTÕES COM BANNER VERMELHO     */}
+          {/* ========================================================= */}
+          {activeModule === 'hub' && (
+            <div className="space-y-6 animate-fadeIn">
+              
+              {/* Telinha Vermelha do Topo com Explicação das Etapas */}
+              <div className="bg-gradient-to-r from-red-600 via-red-700 to-zinc-950 rounded-3xl p-6 sm:p-8 text-white shadow-2xl border border-red-500/30 relative overflow-hidden">
+                <div className="relative z-10 space-y-4">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2 backdrop-blur-sm">
+                      <span>Portal do Colaborador</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                      Distribuidora Irmãos Barreiro
+                    </h1>
+                    <p className="text-sm text-red-100 mt-1">
+                      Selecione uma opção abaixo para continuar:
+                    </p>
+                  </div>
+
+                  {/* Resumo Breve das Etapas / Módulos */}
+                  <div className="pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-red-200" />
+                        1. Relatório Individual
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Formulário de cadastro do colaborador e emissão de ficha oficial em PDF.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-red-200" />
+                        2. Relação de Diaristas
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Tabela de diárias, chaves PIX e cadastro de novos diaristas.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-red-200" />
+                        3. Recibos
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Emissão de recibo diário, semanal ou mensal com quitação legal.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <Sun className="w-3.5 h-3.5 text-amber-300" />
+                        4. Solar
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Emissão oficial de relatórios em PDF do mês e do dia com total de diárias.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5 text-blue-300" />
+                        5. Registro de Funcionários
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Data de entrada, diárias realizadas e relatório com total em dinheiro ganho.
+                      </p>
+                    </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <ShieldAlert className="w-3.5 h-3.5 text-orange-300" />
+                        6. PTs
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Permissões de Trabalho: Altura, Espaço Confinado, Eletricidade, Quente e Químicos.
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                {/* Grid com exatamente 6 caixinhas uniformes */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {moduleItems.map(item => {
-                    const isPt = item.key === 'pts';
-                    return (
-                      <button
-                        key={item.key}
-                        onClick={() => openModule(item)}
-                        className={`group flex min-h-[220px] flex-col justify-between border bg-[#191c1f]/95 p-6 text-left transition hover:bg-[#1f2226] ${
-                          isPt
-                            ? 'border-[#ffc72c]/60 hover:border-[#ffc72c]'
-                            : 'border-[#2c3035] hover:border-[#e3141a]'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-2">
-                            <span className={`font-mono text-[10px] font-bold ${isPt ? 'text-[#ffc72c]' : 'text-[#e3141a]'}`}>{item.id}</span>
-                            <span className="font-mono text-[9px] text-[#4d6278] uppercase">{item.category}</span>
-                          </div>
-                          <h3 className="font-condensed mt-3 text-2xl font-bold uppercase text-white leading-tight">{item.title}</h3>
-                          <p className="mt-2 text-xs leading-relaxed text-[#8d9096]">{item.desc}</p>
-                        </div>
-                        <span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#f2f2ef] group-hover:text-white">
-                          <i className={`h-px w-4 shrink-0 ${isPt ? 'bg-[#ffc72c]' : 'bg-[#e3141a]'}`} />
-                          {item.action}
-                          <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            </main>
-          ) : (
-            <main className="flex-1 p-5 sm:p-8 lg:p-10">{content}</main>
+              {/* GRID DOS 6 BOTÕES PRINCIPAIS (6 EM LINHA NO DESKTOP) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+                
+                {/* BOTÃO 1: RELATÓRIO COM DADOS INDIVIDUAIS */}
+                <button
+                  id="btn-relatorio-individual"
+                  onClick={() => setActiveModule('formulario')}
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-red-50 group-hover:bg-red-600 text-red-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
+                      Relatório com dados individuais
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Preenchimento de dados cadastrais e geração de ficha em PDF.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
+                    <span>Acessar formulário</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 2: RELAÇÃO DE DIARISTAS */}
+                <button
+                  id="btn-relacao-diaristas"
+                  onClick={() => setActiveModule('relacao')}
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-100 group-hover:bg-zinc-900 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
+                      <Users className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
+                      Relação de diaristas
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Controle de diárias, cópia de PIX e cadastro de diaristas.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
+                    <span>Ver relação</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 3: RECIBO INDIVIDUAL */}
+                <button
+                  id="btn-recibo-individual"
+                  onClick={() => {
+                    setSelectedDiaristaForRecibo(null);
+                    setActiveModule('recibo');
+                  }}
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-100 group-hover:bg-red-600 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
+                      <Receipt className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
+                      Recibos
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Geração de recibo diário, semanal ou mensal com quitação legal.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
+                    <span>Emitir recibo</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 4: SOLAR */}
+                <button
+                  id="btn-solar"
+                  onClick={() => setActiveModule('solar')}
+                  className="group bg-white hover:bg-amber-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-amber-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 group-hover:bg-amber-500 text-amber-600 group-hover:text-white flex items-center justify-center transition-colors shadow-xs">
+                      <Sun className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-amber-600 transition-colors leading-snug">
+                      Solar
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Relatórios oficiais em PDF do mês e do dia com controle de diárias e função.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                    <span>Acessar Solar</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 5: REGISTRO DE FUNCIONÁRIOS */}
+                <button
+                  id="btn-registro-funcionarios"
+                  onClick={() => setActiveModule('registro_funcionarios')}
+                  className="group bg-white hover:bg-red-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-red-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-zinc-100 group-hover:bg-red-600 text-zinc-800 group-hover:text-white flex items-center justify-center transition-colors">
+                      <Briefcase className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-red-600 transition-colors leading-snug">
+                      Registro de funcionários
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Começo dos pagamentos, diárias realizadas e relatório completo com total ganho.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-red-600">
+                    <span>Acessar registros</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS (AO LADO DE REGISTRO DE FUNCIONÁRIOS) */}
+                <button
+                  id="btn-permissao-trabalhos"
+                  onClick={() => setActiveModule('pts')}
+                  className="group bg-white hover:bg-orange-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-orange-400/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-orange-50 group-hover:bg-orange-500 text-orange-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <ShieldAlert className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-orange-600 transition-colors leading-snug">
+                      PTs
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Permissões de Trabalho: Altura, Espaço Confinado, Eletricidade, Trabalho a Quente e Químicos.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-orange-600">
+                    <span>Emitir PT</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+              </div>
+            </div>
           )}
 
-          {/* Footer perfeitamente alinhado com o rodapé da sidebar */}
-          <footer className="mt-auto h-14 shrink-0 border-t border-[#1e2530] bg-[#0c0f14] px-5 sm:px-10 flex items-center">
-            <div className="w-full flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Logo isDark className="h-6 opacity-75 shrink-0" />
-                <div className="border-l border-[#1e2530] pl-3 flex items-center h-4">
-                  <p className="text-xs font-medium text-[#6b82a0] whitespace-nowrap">Distribuidora Irmãos Barreiro · Cascavel — CE</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                <span className="font-mono text-[10px] text-[#4d6278] whitespace-nowrap">© {new Date().getFullYear()} IRMÃOS BARREIRO</span>
-                <span className="h-3 w-px bg-[#1e2530]" />
-                <button onClick={() => navigate('/politica-de-privacidade')} className="font-mono text-[10px] font-semibold text-[#4d6278] hover:text-[#e3141a] transition-colors whitespace-nowrap">
-                  POLÍTICA DE PRIVACIDADE
-                </button>
-              </div>
-            </div>
-          </footer>
+          {/* ========================================================= */}
+          {/* 2. FORMULÁRIO COM DADOS INDIVIDUAIS                       */}
+          {/* ========================================================= */}
+          {activeModule === 'formulario' && (
+            <FormularioColaborador
+              userEmail={user?.email}
+              onLogout={handleExit}
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 3. RELAÇÃO DE DIARISTAS                                   */}
+          {/* ========================================================= */}
+          {activeModule === 'relacao' && (
+            <RelacaoDiaristas
+              diaristas={diaristas}
+              dataSelecionada={dataSelecionada}
+              setDataSelecionada={setDataSelecionada}
+              onNavigateCadastrar={() => setActiveModule('cadastrar_diarista')}
+              onEmitirRecibo={handleEmitirReciboDireto}
+              onToggleStatus={handleToggleStatus}
+              onUpdateDiarista={handleUpdateDiarista}
+              onDeleteDiarista={handleDeleteDiarista}
+              onResetDiaristas={handleResetDiaristas}
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 4. CADASTRAR DIARISTA                                     */}
+          {/* ========================================================= */}
+          {activeModule === 'cadastrar_diarista' && (
+            <CadastrarDiarista
+              dataInicial={dataSelecionada}
+              diaristasExistentes={diaristas}
+              onBack={() => setActiveModule('relacao')}
+              onSave={handleAddDiarista}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 5. RECIBO INDIVIDUAL                                      */}
+          {/* ========================================================= */}
+          {activeModule === 'recibo' && (
+            <ReciboIndividual
+              diaristaInicial={selectedDiaristaForRecibo}
+              diaristas={diaristas}
+              onUpdateDiarista={handleUpdateDiarista}
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 6. MÓDULO SOLAR                                           */}
+          {/* ========================================================= */}
+          {activeModule === 'solar' && (
+            <RelatorioSolar
+              diaristas={diaristas}
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 7. MÓDULO REGISTRO DE FUNCIONÁRIOS                        */}
+          {/* ========================================================= */}
+          {activeModule === 'registro_funcionarios' && (
+            <RegistroFuncionarios
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 8. MÓDULO PTs — PERMISSÃO DE TRABALHOS                    */}
+          {/* ========================================================= */}
+          {activeModule === 'pts' && (
+            <PermissaoTrabalhos
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
         </div>
-      </div>
+      </main>
+
+      {/* Rodapé Corporativo Padronizado */}
+      <Footer />
     </div>
   );
 }
-

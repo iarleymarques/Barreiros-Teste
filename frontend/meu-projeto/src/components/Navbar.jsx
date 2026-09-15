@@ -40,19 +40,19 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[#2c3035] bg-[#101214]/95 py-3.5 text-white backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-zinc-200/90 bg-white/95 py-3.5 text-zinc-900 shadow-xs backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           
           {/* Esquerda: Logo + Nome do Sistema */}
           <div className="flex items-center gap-3">
-            <Logo isDark={true} className="h-9 sm:h-10" />
+            <Logo isDark={false} className="h-9 sm:h-10" />
             <div className="hidden sm:flex items-center gap-3">
-              <div className="h-6 w-px bg-[#2c3035]"></div>
+              <div className="h-6 w-px bg-zinc-200"></div>
               <div>
-                <div className="font-condensed text-sm font-bold uppercase leading-none tracking-wide text-white">
+                <div className="font-condensed text-sm font-bold uppercase leading-none tracking-wide text-zinc-900">
                   Portal RH
                 </div>
-                <div className="text-xs font-semibold leading-tight text-[#8d9096]">
+                <div className="text-xs font-semibold leading-tight text-zinc-500">
                   Irmãos Barreiro
                 </div>
               </div>
@@ -65,7 +65,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate('/portal')}
-                  className="inline-flex items-center gap-2 bg-[#e3141a] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-red-700 sm:text-sm"
+                  className="inline-flex items-center gap-2 bg-red-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-red-700 sm:text-sm rounded-xl shadow-xs"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Área do Colaborador</span>
@@ -73,7 +73,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
 
                 <button
                   onClick={onLogout}
-                  className="inline-flex items-center gap-2 border border-[#2c3035] px-3.5 py-2 text-xs font-semibold text-[#f2f2ef] transition-colors hover:border-[#e3141a] hover:text-[#e3141a] sm:text-sm"
+                  className="inline-flex items-center gap-2 border border-zinc-200 bg-zinc-100 px-3.5 py-2 text-xs font-semibold text-zinc-700 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200 sm:text-sm rounded-xl"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden sm:inline">Sair</span>
@@ -82,7 +82,7 @@ export default function Navbar({ isLoggedIn, user, onLogin, onLogout, isLoginOpe
             ) : (
               <button
                 onClick={() => setIsLoginOpen(true)}
-                className="inline-flex items-center gap-2 bg-[#e3141a] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700"
+                className="inline-flex items-center gap-2 bg-red-600 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700 rounded-xl shadow-xs"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Entrar</span>
