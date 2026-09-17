@@ -8,5 +8,21 @@ from app.models.documento_colaborador import DocumentoColaborador
 from app.models.pessoa_juridica import PessoaJuridicaCadastro
 from app.models.documento_pessoa_juridica import DocumentoPessoaJuridica
 from app.models.permissao_trabalho import PermissaoTrabalho
+from app.models.epi import EPI, EntregaEPI
+from app.models.funcionario_epi import FuncionarioEPI
 
-__all__ = ["Usuario", "ColaboradorCadastro", "PessoaJuridicaCadastro", "DocumentoPessoaJuridica", "FuncionarioBase", "RegistroFuncionario", "DiaristaLancamento", "Recibo", "DocumentoColaborador", "PermissaoTrabalho"]
+__all__ = [
+    "Usuario", 
+    "ColaboradorCadastro", 
+    "PessoaJuridicaCadastro", 
+    "DocumentoPessoaJuridica", 
+    "FuncionarioBase", 
+    "RegistroFuncionario", 
+    "DiaristaLancamento", 
+    "Recibo", 
+    "DocumentoColaborador", 
+    "PermissaoTrabalho",
+    "EPI",
+    "EntregaEPI",
+    "FuncionarioEPI"
+]

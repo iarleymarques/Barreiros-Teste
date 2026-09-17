@@ -397,3 +397,210 @@ export async function deletePTApi(id) {
   if (!res.ok) throw new Error('Erro ao remover PT');
   return await res.json();
 }
+
+// ==========================================
+// MÓDULO DE CONTROLE DE EPIs (NR-6)
+// ==========================================
+
+export async function getEpisApi({ busca = '', situacao = '' } = {}) {
+  let url = `${API_BASE_URL}/epis?`;
+  const params = new URLSearchParams();
+  if (busca) params.append('busca', busca);
+  if (situacao) params.append('situacao', situacao);
+  url += params.toString();
+
+  const res = await fetch(url, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Erro ao carregar estoque de EPIs');
+  return await res.json();
+}
+
+export async function createEpiApi(data) {
+  const res = await fetch(`${API_BASE_URL}/epis`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao cadastrar EPI');
+  }
+  return await res.json();
+}
+
+export async function updateEpiApi(id, data) {
+  const res = await fetch(`${API_BASE_URL}/epis/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao atualizar EPI');
+  }
+  return await res.json();
+}
+
+export async function deleteEpiApi(id) {
+  const res = await fetch(`${API_BASE_URL}/epis/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao excluir EPI');
+  return true;
+}
+
+export async function previewPlanilhaEpiApi(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/epis/preview-planilha`, {
+    method: 'POST',
+    headers: getAuthHeaders(), // sem Content-Type para o browser setar multipart boundary
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao processar prévia da planilha');
+  }
+  return await res.json();
+}
+
+export async function importarPlanilhaEpiApi(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/epis/importar-planilha`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao importar planilha');
+  }
+  return await res.json();
+}
+
+export async function importarXmlEpiApi(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await fetch(`${API_BASE_URL}/epis/importar-xml`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao importar XML da NF-e');
+  }
+  return await res.json();
+}
+
+export async function registrarEntregaEpiApi(data) {
+  const res = await fetch(`${API_BASE_URL}/epis/entregas`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao registrar entrega de EPI');
+  }
+  return await res.json();
+}
+
+export async function getEntregasEpiApi({ colaborador = '', epi_id = '' } = {}) {
+  let url = `${API_BASE_URL}/epis/entregas?`;
+  const params = new URLSearchParams();
+  if (colaborador) params.append('colaborador', colaborador);
+  if (epi_id) params.append('epi_id', epi_id);
+  url += params.toString();
+
+  const res = await fetch(url, { headers: getAuthHeaders() });
+  if (!res.ok) throw new Error('Erro ao carregar histórico de entregas');
+  return await res.json();
+}
+
+export function getEpiEntregaPdfUrl(id) {
+  return `${API_BASE_URL}/epis/entregas/${id}/pdf`;
+}
+
+export function getColaboradorFichaPdfUrl(colaboradorNome) {
+  return `${API_BASE_URL}/epis/ficha-colaborador-pdf?colaborador_nome=${encodeURIComponent(colaboradorNome)}`;
+}
+
+export async function carregarPadraoImagem1Api() {
+  const res = await fetch(`${API_BASE_URL}/epis/carregar-padrao-imagem1`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao carregar tabela padrão da Imagem 1');
+  return await res.json();
+}
+
+export async function deleteEntregaEpiApi(id) {
+  const res = await fetch(`${API_BASE_URL}/epis/entregas/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao excluir entrega de EPI');
+  return true;
+}
+
+export async function updateEntregaEpiApi(id, data) {
+  const res = await fetch(`${API_BASE_URL}/epis/entregas/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao atualizar entrega de EPI');
+  }
+  return await res.json();
+}
+
+export async function getFuncionariosEpiApi() {
+  const res = await fetch(`${API_BASE_URL}/epis/funcionarios`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error('Erro ao carregar funcionários do módulo de EPIs');
+  return await res.json();
+}
+
+export async function criarFuncionarioEpiApi(data) {
+  const res = await fetch(`${API_BASE_URL}/epis/funcionarios`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao cadastrar funcionário');
+  }
+  return await res.json();
+}
+
+export async function atualizarFuncionarioEpiApi(id, data) {
+  const res = await fetch(`${API_BASE_URL}/epis/funcionarios/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao atualizar funcionário de EPI');
+  }
+  return await res.json();
+}
+
+export async function deletarFuncionarioEpiApi(id) {
+  const res = await fetch(`${API_BASE_URL}/epis/funcionarios/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Erro ao excluir funcionário de EPI');
+  }
+  return true;
+}
+

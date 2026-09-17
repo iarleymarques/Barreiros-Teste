@@ -1,0 +1,5 @@
+->Olhe a imagem1:
+  ->Eu quero cadastrar primeiramente todos os EPIS, seja importando toda a planilha ou cadastrando um por um, da mesma maneira que é feito com os funcionários, para visualizar todo esse estoque eu queria que fosse em forma de planilha, como se fosse o visualizar de uma planilhas, mas que tivesse um visual mais bonitos, com cores e com abas para separar cada tipo de EPI, o mesmo valerá para a distribuição de EPIs para cada funcionário, que será feito através de um botão de editar que será direcionado para uma pagina com o visualizar de planilha.
+->Olhe a imagem2:
+  ->Ficha de controle de distribuição de EPIs:
+     ->faça o PDF da ficha igual ao da imagem

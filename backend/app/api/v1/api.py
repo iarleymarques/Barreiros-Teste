@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, colaboradores, documentos_pessoas_juridicas, funcionarios, diaristas, pessoas_juridicas, recibos, permissoes_trabalho
+from app.api.v1.endpoints import auth, colaboradores, documentos_pessoas_juridicas, funcionarios, diaristas, pessoas_juridicas, recibos, permissoes_trabalho, epis
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(funcionarios.router, prefix="/funcionarios-base", tags
 api_router.include_router(diaristas.router, prefix="/diaristas", tags=["Lançamentos de Diaristas"])
 api_router.include_router(recibos.router, prefix="/recibos", tags=["Emissão de Recibos"])
 api_router.include_router(permissoes_trabalho.router, prefix="/permissoes-trabalho", tags=["Permissões de Trabalho (PTs)"])
+api_router.include_router(epis.router, prefix="/epis", tags=["Controle de EPIs"])

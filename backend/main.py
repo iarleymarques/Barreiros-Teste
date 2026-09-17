@@ -17,7 +17,10 @@ from app.models import (
     DocumentoColaborador,
     PessoaJuridicaCadastro,
     DocumentoPessoaJuridica,
-    PermissaoTrabalho
+    PermissaoTrabalho,
+    EPI,
+    EntregaEPI,
+    FuncionarioEPI
 )
 
 # Inicializa as tabelas no banco de dados PostgreSQL (Barreiro) automaticamente na inicialização
@@ -98,7 +101,22 @@ def init_db():
                         
                     END IF;
                 END $$;
-                """
+                """,
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS categoria VARCHAR(50) DEFAULT 'OUTROS';",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS observacao TEXT;",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS fabricante VARCHAR(150);",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS data_fabricacao VARCHAR(30);",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS validade_epi VARCHAR(30);",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS numero_ca VARCHAR(50);",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS validade_ca VARCHAR(30);",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS estoque_real FLOAT DEFAULT 0.0;",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS estoque_minimo FLOAT DEFAULT 0.0;",
+                "ALTER TABLE epis ADD COLUMN IF NOT EXISTS unidade VARCHAR(20) DEFAULT 'UN';",
+                "ALTER TABLE entregas_epis ADD COLUMN IF NOT EXISTS cod_epi VARCHAR(20);",
+                "ALTER TABLE entregas_epis ADD COLUMN IF NOT EXISTS tamanho VARCHAR(30);",
+                "ALTER TABLE entregas_epis ADD COLUMN IF NOT EXISTS local VARCHAR(100);",
+                "ALTER TABLE entregas_epis ADD COLUMN IF NOT EXISTS motivo VARCHAR(20) DEFAULT 'A';",
+                "ALTER TABLE entregas_epis ADD COLUMN IF NOT EXISTS termo_assinado BOOLEAN DEFAULT FALSE;"
             ]
             for sql in migration_sqls:
                 try:

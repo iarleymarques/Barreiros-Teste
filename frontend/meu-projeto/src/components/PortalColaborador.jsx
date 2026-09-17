@@ -8,6 +8,7 @@ import ReciboIndividual from './ReciboIndividual';
 import RelatorioSolar from './RelatorioSolar';
 import RegistroFuncionarios from './RegistroFuncionarios';
 import PermissaoTrabalhos from './PermissaoTrabalhos';
+import ControleEPIs from './ControleEPIs';
 import Footer from './Footer';
 import { 
   getDiaristasApi, 
@@ -26,7 +27,8 @@ import {
   LayoutGrid,
   Sun,
   Briefcase,
-  ShieldAlert
+  ShieldAlert,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function PortalColaborador({ user, onLogout }) {
@@ -260,7 +262,7 @@ export default function PortalColaborador({ user, onLogout }) {
                   </div>
 
                   {/* Resumo Breve das Etapas / Módulos */}
-                  <div className="pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 text-xs">
+                  <div className="pt-4 border-t border-white/20 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 text-xs">
                     <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
                       <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-red-200" />
@@ -320,12 +322,22 @@ export default function PortalColaborador({ user, onLogout }) {
                         Permissões de Trabalho: Altura, Espaço Confinado, Eletricidade, Quente e Químicos.
                       </p>
                     </div>
+
+                    <div className="bg-white/10 rounded-2xl p-3.5 backdrop-blur-sm border border-white/10 space-y-1">
+                      <span className="font-extrabold text-white uppercase flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                        7. Controle de EPIs
+                      </span>
+                      <p className="text-red-100/90 text-[11px] leading-relaxed">
+                        Estoque mínimo, CAs, importação de planilhas/NF-e e ficha NR-6 em PDF.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* GRID DOS 6 BOTÕES PRINCIPAIS (6 EM LINHA NO DESKTOP) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+              {/* GRID DOS BOTÕES PRINCIPAIS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 sm:gap-4">
                 
                 {/* BOTÃO 1: RELATÓRIO COM DADOS INDIVIDUAIS */}
                 <button
@@ -450,7 +462,7 @@ export default function PortalColaborador({ user, onLogout }) {
                   </div>
                 </button>
 
-                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS (AO LADO DE REGISTRO DE FUNCIONÁRIOS) */}
+                {/* BOTÃO 6: PTs — PERMISSÃO DE TRABALHOS */}
                 <button
                   id="btn-permissao-trabalhos"
                   onClick={() => setActiveModule('pts')}
@@ -470,6 +482,30 @@ export default function PortalColaborador({ user, onLogout }) {
 
                   <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-orange-600">
                     <span>Emitir PT</span>
+                    <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </button>
+
+                {/* BOTÃO 7: CONTROLE DE EPIS */}
+                <button
+                  id="btn-controle-epis"
+                  onClick={() => setActiveModule('epis')}
+                  className="group bg-white hover:bg-emerald-50/50 rounded-3xl p-4 sm:p-5 border border-zinc-200 shadow-xl hover:shadow-2xl hover:border-emerald-500/50 transition-all duration-200 flex flex-col justify-between text-left cursor-pointer min-h-[210px]"
+                >
+                  <div className="space-y-3">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 group-hover:bg-emerald-600 text-emerald-600 group-hover:text-white flex items-center justify-center transition-colors">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-sm sm:text-base font-black text-zinc-900 group-hover:text-emerald-600 transition-colors leading-snug">
+                      Controle de EPIs
+                    </h2>
+                    <p className="text-xs text-zinc-500 line-clamp-2">
+                      Estoque mínimo, CAs válidos, importação de planilhas/NF-e e ficha NR-6 em PDF.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                    <span>Acessar EPIs</span>
                     <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -555,6 +591,15 @@ export default function PortalColaborador({ user, onLogout }) {
           {/* ========================================================= */}
           {activeModule === 'pts' && (
             <PermissaoTrabalhos
+              onBack={() => setActiveModule('hub')}
+            />
+          )}
+
+          {/* ========================================================= */}
+          {/* 9. MÓDULO CONTROLE DE EPIS (NR-6)                          */}
+          {/* ========================================================= */}
+          {activeModule === 'epis' && (
+            <ControleEPIs
               onBack={() => setActiveModule('hub')}
             />
           )}
